@@ -80,37 +80,13 @@ const RockPaperScissors = () => {
     }
     
     entitiesRef.current = entities;
-    updateCounts(entities);
-  };
-
-  const updateCounts = (entities: Entity[]) => {
+    
+    // Update counts
     const newCounts = { rock: 0, paper: 0, scissors: 0 };
     entities.forEach((entity) => {
       newCounts[entity.type]++;
     });
     setCounts(newCounts);
-    
-    // Check for winner
-    const types = Object.keys(newCounts).filter((type) => newCounts[type as EntityType] > 0);
-    if (types.length === 1 && entities.length > 0) {
-      setWinner(types[0] as EntityType);
-      setIsRunning(false);
-    }
-  };
-
-  const checkCollision = (e1: Entity, e2: Entity): boolean => {
-    const dx = e1.x - e2.x;
-    const dy = e1.y - e2.y;
-    const distance = Math.sqrt(dx * dx + dy * dy);
-    return distance < e1.size;
-  };
-
-  const getWinner = (type1: EntityType, type2: EntityType): EntityType => {
-    if (type1 === type2) return type1;
-    if (type1 === "rock" && type2 === "scissors") return "rock";
-    if (type1 === "scissors" && type2 === "paper") return "scissors";
-    if (type1 === "paper" && type2 === "rock") return "paper";
-    return type2;
   };
 
   const animate = () => {
@@ -145,8 +121,27 @@ const RockPaperScissors = () => {
     // Check collisions and transform
     for (let i = 0; i < entities.length; i++) {
       for (let j = i + 1; j < entities.length; j++) {
-        if (checkCollision(entities[i], entities[j])) {
-          const winner = getWinner(entities[i].type, entities[j].type);
+        const dx = entities[i].x - entities[j].x;
+        const dy = entities[i].y - entities[j].y;
+        const distance = Math.sqrt(dx * dx + dy * dy);
+        
+        if (distance < entities[i].size) {
+          const type1 = entities[i].type;
+          const type2 = entities[j].type;
+          
+          let winner: EntityType;
+          if (type1 === type2) {
+            winner = type1;
+          } else if (type1 === "rock" && type2 === "scissors") {
+            winner = "rock";
+          } else if (type1 === "scissors" && type2 === "paper") {
+            winner = "scissors";
+          } else if (type1 === "paper" && type2 === "rock") {
+            winner = "paper";
+          } else {
+            winner = type2;
+          }
+          
           if (winner !== entities[i].type) {
             entities[i].type = winner;
           }
@@ -166,46 +161,24 @@ const RockPaperScissors = () => {
       ctx.fillText(EMOJI_MAP[entity.type], entity.x + entity.size / 2, entity.y + entity.size / 2);
     });
     
-    updateCounts(entities);
+    // Update counts and check for winner
+    const newCounts = { rock: 0, paper: 0, scissors: 0 };
+    entities.forEach((entity) => {
+      newCounts[entity.type]++;
+    });
+    setCounts(newCounts);
+    
+    const types = Object.keys(newCounts).filter((type) => newCounts[type as EntityType] > 0);
+    if (types.length === 1 && entities.length > 0) {
+      setWinner(types[0] as EntityType);
+      setIsRunning(false);
+    }
     
     if (isRunning) {
       animationFrameRef.current = requestAnimationFrame(animate);
     }
   };
 
-  const handleStart = () => {
-    if (rockCount + paperCount + scissorsCount > 200) {
-      alert("Maximum 200 entities allowed!");
-      return;
-    }
-    
-    setWinner(null);
-    setIsRunning(true);
-    setIsPaused(false);
-    initializeEntities();
-  };
-
-  const handleReset = () => {
-    setIsRunning(false);
-    setIsPaused(false);
-    setWinner(null);
-    entitiesRef.current = [];
-    setCounts({ rock: 0, paper: 0, scissors: 0 });
-    
-    if (canvasRef.current) {
-      const ctx = canvasRef.current.getContext("2d");
-      if (ctx) {
-        ctx.fillStyle = "#f8fafc";
-        ctx.fillRect(0, 0, canvasRef.current.width, canvasRef.current.height);
-      }
-    }
-  };
-
-  const togglePause = () => {
-    if (isRunning) {
-      setIsPaused(!isPaused);
-    }
-  };
 
   useEffect(() => {
     if (isRunning && !isPaused) {
@@ -221,9 +194,9 @@ const RockPaperScissors = () => {
 
   useEffect(() => {
     const handleKeyPress = (e: KeyboardEvent) => {
-      if (e.code === "Space") {
+      if (e.code === "Space" && isRunning) {
         e.preventDefault();
-        togglePause();
+        setIsPaused(!isPaused);
       }
     };
     
@@ -318,7 +291,17 @@ const RockPaperScissors = () => {
             
             <Button
               id="startBtn"
-              onClick={handleStart}
+              onClick={() => {
+                if (rockCount + paperCount + scissorsCount > 200) {
+                  alert("Maximum 200 entities allowed!");
+                  return;
+                }
+                
+                setWinner(null);
+                setIsRunning(true);
+                setIsPaused(false);
+                initializeEntities();
+              }}
               className="w-full font-mono text-lg"
               size="lg"
             >
@@ -362,7 +345,11 @@ const RockPaperScissors = () => {
             {/* Controls */}
             <div className="flex gap-4 justify-center">
               <Button
-                onClick={togglePause}
+                onClick={() => {
+                  if (isRunning) {
+                    setIsPaused(!isPaused);
+                  }
+                }}
                 variant="secondary"
                 className="font-mono"
                 size="lg"
@@ -371,7 +358,21 @@ const RockPaperScissors = () => {
               </Button>
               <Button
                 id="resetBtn"
-                onClick={handleReset}
+                onClick={() => {
+                  setIsRunning(false);
+                  setIsPaused(false);
+                  setWinner(null);
+                  entitiesRef.current = [];
+                  setCounts({ rock: 0, paper: 0, scissors: 0 });
+                  
+                  if (canvasRef.current) {
+                    const ctx = canvasRef.current.getContext("2d");
+                    if (ctx) {
+                      ctx.fillStyle = "#f8fafc";
+                      ctx.fillRect(0, 0, canvasRef.current.width, canvasRef.current.height);
+                    }
+                  }
+                }}
                 variant="outline"
                 className="font-mono"
                 size="lg"
@@ -393,7 +394,21 @@ const RockPaperScissors = () => {
               Total domination achieved
             </p>
             <Button
-              onClick={handleReset}
+              onClick={() => {
+                setIsRunning(false);
+                setIsPaused(false);
+                setWinner(null);
+                entitiesRef.current = [];
+                setCounts({ rock: 0, paper: 0, scissors: 0 });
+                
+                if (canvasRef.current) {
+                  const ctx = canvasRef.current.getContext("2d");
+                  if (ctx) {
+                    ctx.fillStyle = "#f8fafc";
+                    ctx.fillRect(0, 0, canvasRef.current.width, canvasRef.current.height);
+                  }
+                }
+              }}
               size="lg"
               className="font-mono"
             >
