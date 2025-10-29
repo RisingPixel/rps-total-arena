@@ -746,16 +746,7 @@ const RockPaperScissors = () => {
                 >
                   {STRINGS.en.playAgain}
                 </Button>
-                
-                <Button 
-                  id="continueBtn"
-                  onClick={handlePlayAgain}
-                  variant="secondary"
-                  size="lg"
-                  className="font-mono"
-                >
-                  {STRINGS.en.continue}
-                </Button>
+              
               </div>
             </div>
           </div>
