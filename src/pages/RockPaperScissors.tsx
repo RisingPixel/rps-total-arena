@@ -3,6 +3,7 @@ import { Button } from "@/components/ui/button";
 import { Slider } from "@/components/ui/slider";
 import { Card } from "@/components/ui/card";
 import totalArenaLogo from "@/assets/total-arena-logo.png";
+import { usePokiSDK } from "@/hooks/usePokiSDK";
 
 type EntityType = "rock" | "paper" | "scissors";
 type GamePhase = "bet" | "running" | "victory";
@@ -63,6 +64,7 @@ const RockPaperScissors = () => {
   const [countdown, setCountdown] = useState<number | null>(null);
   const isSlowMotionRef = useRef(false);
   const [showConfetti, setShowConfetti] = useState(false);
+  const [isMuted, setIsMuted] = useState(false);
   const battleStatsRef = useRef({
     startTime: 0,
     totalCollisions: 0,
@@ -76,6 +78,15 @@ const RockPaperScissors = () => {
   
   const entitiesRef = useRef<Entity[]>([]);
   const animationFrameRef = useRef<number>();
+  
+  // Poki SDK integration
+  const {
+    isSDKReady,
+    isAdPlaying,
+    gameplayStart,
+    gameplayStop,
+    commercialBreak,
+  } = usePokiSDK();
   
   // Load streak from localStorage
   useEffect(() => {
@@ -103,6 +114,9 @@ const RockPaperScissors = () => {
       initializeEntities();
       battleStatsRef.current.startTime = Date.now();
       battleStatsRef.current.totalCollisions = 0;
+      
+      // Fire Poki gameplay start
+      gameplayStart();
     }
   }, [countdown]);
 
@@ -164,7 +178,7 @@ const RockPaperScissors = () => {
     setCounts(newCounts);
   };
 
-  const handleBet = (bet: EntityType) => {
+  const handleBet = async (bet: EntityType) => {
     setPlayerBet(bet);
     
     // Randomize spawn preset
@@ -181,8 +195,18 @@ const RockPaperScissors = () => {
     setShowConfetti(false);
     battleStatsRef.current = { startTime: 0, totalCollisions: 0, duration: 0 };
     
-    // Start countdown
-    setCountdown(3);
+    // Show commercial break before game starts
+    await commercialBreak(
+      () => {
+        // Ad started - mute audio if any
+        setIsMuted(true);
+      },
+      () => {
+        // Ad finished - unmute and start countdown
+        setIsMuted(false);
+        setCountdown(3);
+      }
+    );
   };
 
   const handleSpeedChange = (newSpeed: number[]) => {
@@ -205,6 +229,9 @@ const RockPaperScissors = () => {
     setWinner(winningType);
     setGamePhase('victory');
     setIsRunning(false);
+    
+    // Fire Poki gameplay stop
+    gameplayStop();
     
     // Calculate battle stats
     const duration = Math.round((Date.now() - battleStatsRef.current.startTime) / 1000);
@@ -254,6 +281,12 @@ const RockPaperScissors = () => {
   };
 
   const animate = () => {
+    // Don't animate during ads
+    if (isAdPlaying) {
+      animationFrameRef.current = requestAnimationFrame(animate);
+      return;
+    }
+    
     if (!canvasRef.current || isPaused) return;
     
     const canvas = canvasRef.current;
@@ -414,7 +447,15 @@ const RockPaperScissors = () => {
     const handleKeyPress = (e: KeyboardEvent) => {
       if (e.code === "Space" && isRunning) {
         e.preventDefault();
-        setIsPaused(!isPaused);
+        const newPausedState = !isPaused;
+        setIsPaused(newPausedState);
+        
+        // Fire Poki events
+        if (newPausedState) {
+          gameplayStop(); // Pausing
+        } else {
+          gameplayStart(); // Unpausing
+        }
       }
       
       if (e.code === "Escape" && gamePhase === 'victory') {
@@ -720,6 +761,16 @@ const RockPaperScissors = () => {
           </div>
         )}
       </div>
+      
+      {/* Ad Playing Overlay */}
+      {isAdPlaying && (
+        <div className="fixed inset-0 bg-black/80 z-50 flex items-center justify-center">
+          <div className="text-white text-center space-y-4">
+            <div className="text-2xl font-bold">Advertisement</div>
+            <div className="text-sm opacity-75">Please wait...</div>
+          </div>
+        </div>
+      )}
     </div>
   );
 };
