@@ -78,6 +78,7 @@ const RockPaperScissors = () => {
   // Live counters
   const [counts, setCounts] = useState({ rock: 0, paper: 0, scissors: 0 });
   const [prevCounts, setPrevCounts] = useState({ rock: 0, paper: 0, scissors: 0 });
+  const [prevLeader, setPrevLeader] = useState<EntityType | null>(null);
   
   // Juiciness state
   const [countdown, setCountdown] = useState<number | null>(null);
@@ -417,6 +418,19 @@ const RockPaperScissors = () => {
     };
   }, [isRunning, isPaused]);
 
+  // Leader change detection for glow effect
+  useEffect(() => {
+    const currentLeader = 
+      counts.rock > counts.paper && counts.rock > counts.scissors ? 'rock' :
+      counts.paper > counts.rock && counts.paper > counts.scissors ? 'paper' :
+      counts.scissors > counts.rock && counts.scissors > counts.paper ? 'scissors' :
+      null;
+    
+    if (currentLeader && currentLeader !== prevLeader) {
+      setPrevLeader(currentLeader);
+    }
+  }, [counts, prevLeader]);
+
   useEffect(() => {
     const handleKeyPress = (e: KeyboardEvent) => {
       if (e.code === "Space" && isRunning) {
@@ -437,15 +451,6 @@ const RockPaperScissors = () => {
   return (
     <div className="min-h-screen bg-gradient-to-br from-background via-background to-accent/10 p-4 md:p-8">
       <div className="max-w-6xl mx-auto space-y-6">
-        {/* Header */}
-        <div className="text-center space-y-2">
-          <h1 className="text-4xl md:text-5xl font-bold text-foreground font-mono">
-            Rock Paper Scissors Live
-          </h1>
-          <p className="text-base md:text-lg text-muted-foreground font-mono">
-            {STRINGS[lang].whoDominate}
-          </p>
-        </div>
 
         {/* Bet Screen */}
         {gamePhase === 'bet' && (
@@ -505,84 +510,92 @@ const RockPaperScissors = () => {
         {/* Running Phase */}
         {gamePhase === 'running' && (
           <div className="space-y-4">
-            {/* HUD */}
-            <div id="hud" className="hud-container">
-              <div className="counters-row">
-                {/* Rock Counter */}
-                <div className="counter-bar">
-                  <div className="counter-header">
-                    <span className="emoji">🪨</span>
-                    {prevCounts.rock !== 0 && counts.rock !== prevCounts.rock && (
-                      <span className={`momentum-arrow ${counts.rock > prevCounts.rock ? 'up' : 'down'}`}>
-                        {counts.rock > prevCounts.rock ? '↑' : '↓'} {Math.abs(counts.rock - prevCounts.rock)}
-                      </span>
-                    )}
+            {/* Ultra-Compact HUD */}
+            <div id="hudCompact" className="hud-compact-container">
+              {/* Top Row: Title + Win Streak */}
+              <div className="top-row">
+                <h1 className="game-title">Rock Paper Scissors Live</h1>
+                {streak > 0 && (
+                  <div id="streakChip" className="streak-chip">
+                    🔥 {streak} win streak
                   </div>
-                  <div className="bar-container">
-                    <div 
-                      className="bar bar-rock" 
-                      style={{ width: `${(counts.rock / (counts.rock + counts.paper + counts.scissors)) * 100}%` }}
-                    >
-                      <span className="bar-label">{counts.rock}</span>
-                    </div>
-                  </div>
+                )}
+              </div>
+              
+              {/* Counter Badges (micro, inline sopra i segmenti) */}
+              <div className="counters-inline">
+                <div className="micro-badge" data-type="rock">
+                  <span className="emoji">🪨</span>
+                  <span className="value">{counts.rock}</span>
+                  {prevCounts.rock !== 0 && counts.rock !== prevCounts.rock && (
+                    <span className={`momentum-micro ${counts.rock > prevCounts.rock ? 'up' : 'down'}`}>
+                      {counts.rock > prevCounts.rock ? '↑' : '↓'}
+                    </span>
+                  )}
                 </div>
                 
-                {/* Paper Counter */}
-                <div className="counter-bar">
-                  <div className="counter-header">
-                    <span className="emoji">📜</span>
-                    {prevCounts.paper !== 0 && counts.paper !== prevCounts.paper && (
-                      <span className={`momentum-arrow ${counts.paper > prevCounts.paper ? 'up' : 'down'}`}>
-                        {counts.paper > prevCounts.paper ? '↑' : '↓'} {Math.abs(counts.paper - prevCounts.paper)}
-                      </span>
-                    )}
-                  </div>
-                  <div className="bar-container">
-                    <div 
-                      className="bar bar-paper" 
-                      style={{ width: `${(counts.paper / (counts.rock + counts.paper + counts.scissors)) * 100}%` }}
-                    >
-                      <span className="bar-label">{counts.paper}</span>
-                    </div>
-                  </div>
+                <div className="micro-badge" data-type="paper">
+                  <span className="emoji">📜</span>
+                  <span className="value">{counts.paper}</span>
+                  {prevCounts.paper !== 0 && counts.paper !== prevCounts.paper && (
+                    <span className={`momentum-micro ${counts.paper > prevCounts.paper ? 'up' : 'down'}`}>
+                      {counts.paper > prevCounts.paper ? '↑' : '↓'}
+                    </span>
+                  )}
                 </div>
                 
-                {/* Scissors Counter */}
-                <div className="counter-bar">
-                  <div className="counter-header">
-                    <span className="emoji">✂️</span>
-                    {prevCounts.scissors !== 0 && counts.scissors !== prevCounts.scissors && (
-                      <span className={`momentum-arrow ${counts.scissors > prevCounts.scissors ? 'up' : 'down'}`}>
-                        {counts.scissors > prevCounts.scissors ? '↑' : '↓'} {Math.abs(counts.scissors - prevCounts.scissors)}
-                      </span>
-                    )}
-                  </div>
-                  <div className="bar-container">
-                    <div 
-                      className="bar bar-scissors" 
-                      style={{ width: `${(counts.scissors / (counts.rock + counts.paper + counts.scissors)) * 100}%` }}
-                    >
-                      <span className="bar-label">{counts.scissors}</span>
-                    </div>
-                  </div>
+                <div className="micro-badge" data-type="scissors">
+                  <span className="emoji">✂️</span>
+                  <span className="value">{counts.scissors}</span>
+                  {prevCounts.scissors !== 0 && counts.scissors !== prevCounts.scissors && (
+                    <span className={`momentum-micro ${counts.scissors > prevCounts.scissors ? 'up' : 'down'}`}>
+                      {counts.scissors > prevCounts.scissors ? '↑' : '↓'}
+                    </span>
+                  )}
                 </div>
               </div>
               
-              <div 
-                id="betPill" 
-                className="bet-pill"
-                aria-live="polite"
-                data-bet-type={playerBet || undefined}
-              >
-                {STRINGS[lang].yourBet} {EMOJI_MAP[playerBet!]} {playerBet}
-              </div>
-              
-              {streak > 0 && (
-                <div className="streak-badge" aria-live="polite">
-                  🔥 {streak} {STRINGS[lang].winStreak}
+              {/* Progress Bar Container (relative per bet pill absolute) */}
+              <div className="arena-bar-wrapper">
+                {/* Bet Pill Floating */}
+                <div 
+                  id="betPill" 
+                  className="bet-pill-floating"
+                  data-bet-type={playerBet || undefined}
+                >
+                  Your bet: {EMOJI_MAP[playerBet!]}
                 </div>
-              )}
+                
+                {/* Progress Bar a 3 Segmenti */}
+                <div id="arenaBar" className="arena-bar">
+                  <span 
+                    className={`bar rock ${playerBet === 'rock' ? 'bet-active' : ''} ${counts.rock > counts.paper && counts.rock > counts.scissors ? 'leader' : ''}`}
+                    style={{ width: `${(counts.rock / (counts.rock + counts.paper + counts.scissors)) * 100}%` }}
+                  >
+                    {counts.rock > counts.paper && counts.rock > counts.scissors && (
+                      <span className="dominant-value">{counts.rock}</span>
+                    )}
+                  </span>
+                  
+                  <span 
+                    className={`bar paper ${playerBet === 'paper' ? 'bet-active' : ''} ${counts.paper > counts.rock && counts.paper > counts.scissors ? 'leader' : ''}`}
+                    style={{ width: `${(counts.paper / (counts.rock + counts.paper + counts.scissors)) * 100}%` }}
+                  >
+                    {counts.paper > counts.rock && counts.paper > counts.scissors && (
+                      <span className="dominant-value">{counts.paper}</span>
+                    )}
+                  </span>
+                  
+                  <span 
+                    className={`bar scissors ${playerBet === 'scissors' ? 'bet-active' : ''} ${counts.scissors > counts.rock && counts.scissors > counts.paper ? 'leader' : ''}`}
+                    style={{ width: `${(counts.scissors / (counts.rock + counts.paper + counts.scissors)) * 100}%` }}
+                  >
+                    {counts.scissors > counts.rock && counts.scissors > counts.paper && (
+                      <span className="dominant-value">{counts.scissors}</span>
+                    )}
+                  </span>
+                </div>
+              </div>
             </div>
 
             {/* Canvas */}
@@ -612,27 +625,6 @@ const RockPaperScissors = () => {
                 />
               </div>
             </Card>
-
-            {/* Controls */}
-            <div className="flex gap-4 justify-center flex-wrap">
-              <Button
-                onClick={() => setIsPaused(!isPaused)}
-                variant="secondary"
-                className="font-mono"
-                size="lg"
-              >
-                {isPaused ? `${STRINGS[lang].resume} [Space]` : `${STRINGS[lang].pause} [Space]`}
-              </Button>
-              <Button
-                id="resetBtn"
-                onClick={handlePlayAgain}
-                variant="outline"
-                className="font-mono"
-                size="lg"
-              >
-                {STRINGS[lang].reset}
-              </Button>
-            </div>
           </div>
         )}
 
