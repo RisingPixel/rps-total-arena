@@ -81,9 +81,14 @@ const RockPaperScissors = () => {
   
   // Juiciness state
   const [countdown, setCountdown] = useState<number | null>(null);
-  const [isSlowMotion, setIsSlowMotion] = useState(false);
+  const isSlowMotionRef = useRef(false);
   const [showConfetti, setShowConfetti] = useState(false);
-  const [battleStats, setBattleStats] = useState({
+  const battleStatsRef = useRef({
+    startTime: 0,
+    totalCollisions: 0,
+    duration: 0
+  });
+  const [battleStatsFinal, setBattleStatsFinal] = useState({
     startTime: 0,
     totalCollisions: 0,
     duration: 0
@@ -116,14 +121,16 @@ const RockPaperScissors = () => {
       setIsRunning(true);
       setIsPaused(false);
       initializeEntities();
-      setBattleStats(prev => ({ ...prev, startTime: Date.now() }));
+      battleStatsRef.current.startTime = Date.now();
+      battleStatsRef.current.totalCollisions = 0;
     }
   }, [countdown]);
 
   // Track stats when game starts
   useEffect(() => {
-    if (gamePhase === 'running' && isRunning && battleStats.startTime === 0) {
-      setBattleStats(prev => ({ ...prev, startTime: Date.now() }));
+    if (gamePhase === 'running' && isRunning && battleStatsRef.current.startTime === 0) {
+      battleStatsRef.current.startTime = Date.now();
+      battleStatsRef.current.totalCollisions = 0;
     }
   }, [gamePhase, isRunning]);
 
@@ -190,9 +197,9 @@ const RockPaperScissors = () => {
     setScissorsCount(count);
     
     // Reset juiciness state
-    setIsSlowMotion(false);
+    isSlowMotionRef.current = false;
     setShowConfetti(false);
-    setBattleStats({ startTime: 0, totalCollisions: 0, duration: 0 });
+    battleStatsRef.current = { startTime: 0, totalCollisions: 0, duration: 0 };
     
     // Start countdown
     setCountdown(3);
@@ -220,8 +227,11 @@ const RockPaperScissors = () => {
     setIsRunning(false);
     
     // Calculate battle stats
-    const duration = Math.round((Date.now() - battleStats.startTime) / 1000);
-    setBattleStats(prev => ({ ...prev, duration }));
+    const duration = Math.round((Date.now() - battleStatsRef.current.startTime) / 1000);
+    setBattleStatsFinal({
+      ...battleStatsRef.current,
+      duration
+    });
     
     // Trigger confetti for victory
     if (winningType === playerBet) {
@@ -247,8 +257,9 @@ const RockPaperScissors = () => {
     setIsPaused(false);
     setWinner(null);
     setPlayerBet(null);
-    setIsSlowMotion(false);
+    isSlowMotionRef.current = false;
     setShowConfetti(false);
+    battleStatsRef.current = { startTime: 0, totalCollisions: 0, duration: 0 };
     entitiesRef.current = [];
     setCounts({ rock: 0, paper: 0, scissors: 0 });
     setPrevCounts({ rock: 0, paper: 0, scissors: 0 });
@@ -274,7 +285,7 @@ const RockPaperScissors = () => {
     ctx.fillRect(0, 0, canvas.width, canvas.height);
     
     // Apply slow-motion spotlight effect
-    if (isSlowMotion) {
+    if (isSlowMotionRef.current) {
       ctx.save();
       ctx.globalAlpha = 0.5;
       ctx.fillStyle = "#000000";
@@ -326,11 +337,11 @@ const RockPaperScissors = () => {
           
           if (winner !== entities[i].type) {
             entities[i].type = winner;
-            setBattleStats(prev => ({ ...prev, totalCollisions: prev.totalCollisions + 1 }));
+            battleStatsRef.current.totalCollisions++;
           }
           if (winner !== entities[j].type) {
             entities[j].type = winner;
-            setBattleStats(prev => ({ ...prev, totalCollisions: prev.totalCollisions + 1 }));
+            battleStatsRef.current.totalCollisions++;
           }
         }
       }
@@ -351,22 +362,29 @@ const RockPaperScissors = () => {
       newCounts[entity.type]++;
     });
     
-    // Save previous counts for momentum
-    setPrevCounts(counts);
-    setCounts(newCounts);
+    // Only update counts if they've changed
+    const countsChanged = 
+      newCounts.rock !== counts.rock ||
+      newCounts.paper !== counts.paper ||
+      newCounts.scissors !== counts.scissors;
+    
+    if (countsChanged) {
+      setPrevCounts(counts);
+      setCounts(newCounts);
+    }
     
     // Check for slow-motion trigger (2 species with <10 entities)
     const typesWithEntities = Object.keys(newCounts).filter(
       (type) => newCounts[type as EntityType] > 0
     );
     
-    if (typesWithEntities.length === 2 && !isSlowMotion) {
+    if (typesWithEntities.length === 2 && !isSlowMotionRef.current) {
       const losingTypes = typesWithEntities.filter(
         (type) => newCounts[type as EntityType] < 10
       );
       
       if (losingTypes.length > 0) {
-        setIsSlowMotion(true);
+        isSlowMotionRef.current = true;
         // Reduce speed to 30%
         entitiesRef.current.forEach(entity => {
           entity.vx *= 0.3;
@@ -389,7 +407,7 @@ const RockPaperScissors = () => {
 
   useEffect(() => {
     if (isRunning && !isPaused) {
-      animate();
+      animationFrameRef.current = requestAnimationFrame(animate);
     }
     
     return () => {
@@ -668,13 +686,13 @@ const RockPaperScissors = () => {
               <div className="stats-recap">
                 <div className="stat-item animate-stat-slide" style={{ animationDelay: '0.2s' }}>
                   <span className="stat-icon">⏱️</span>
-                  <span className="stat-value">{battleStats.duration}s</span>
+                  <span className="stat-value">{battleStatsFinal.duration}s</span>
                   <span className="stat-label">Battle Duration</span>
                 </div>
                 
                 <div className="stat-item animate-stat-slide" style={{ animationDelay: '0.4s' }}>
                   <span className="stat-icon">💥</span>
-                  <span className="stat-value">{battleStats.totalCollisions}</span>
+                  <span className="stat-value">{battleStatsFinal.totalCollisions}</span>
                   <span className="stat-label">Collisions</span>
                 </div>
                 
