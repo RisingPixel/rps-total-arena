@@ -171,8 +171,9 @@ button:active::after {
   @apply flex items-center justify-between gap-4;
 }
 
-.game-title {
-  @apply text-xl font-bold font-mono text-foreground;
+.game-title-logo {
+  @apply object-contain;
+  max-width: 280px;
 }
 
 #streakChip {
@@ -284,8 +285,9 @@ button:active::after {
     @apply max-h-[90px];
   }
   
-  .game-title {
-    @apply text-base;
+  .game-title-logo {
+    @apply h-5;
+    max-width: 200px;
   }
   
   #streakChip {

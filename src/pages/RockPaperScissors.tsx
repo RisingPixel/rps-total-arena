@@ -2,6 +2,7 @@ import { useEffect, useRef, useState } from "react";
 import { Button } from "@/components/ui/button";
 import { Slider } from "@/components/ui/slider";
 import { Card } from "@/components/ui/card";
+import totalArenaLogo from "@/assets/total-arena-logo.png";
 
 type EntityType = "rock" | "paper" | "scissors";
 type GamePhase = "bet" | "running" | "victory";
@@ -456,9 +457,13 @@ const RockPaperScissors = () => {
         {gamePhase === 'bet' && (
           <div id="betScreen" className="space-y-6">
             <Card className="p-6 md:p-8 space-y-6 shadow-lg">
-              <h2 className="text-2xl md:text-3xl font-bold text-center font-mono">
-                {STRINGS[lang].chooseChampion}
-              </h2>
+              <div className="text-center">
+                <img 
+                  src={totalArenaLogo} 
+                  alt="Total Arena - Rock Paper Scissors" 
+                  className="mx-auto h-20 md:h-24 w-auto drop-shadow-lg"
+                />
+              </div>
               
               <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 md:gap-6">
                 <button
@@ -514,7 +519,11 @@ const RockPaperScissors = () => {
             <div id="hudCompact" className="hud-compact-container">
               {/* Top Row: Title + Win Streak */}
               <div className="top-row">
-                <h1 className="game-title">Rock Paper Scissors Live</h1>
+                <img 
+                  src={totalArenaLogo} 
+                  alt="Total Arena" 
+                  className="game-title-logo h-6 md:h-7 w-auto"
+                />
                 {streak > 0 && (
                   <div id="streakChip" className="streak-chip">
                     🔥 {streak} win streak
