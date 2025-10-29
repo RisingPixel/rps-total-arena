@@ -281,8 +281,17 @@ button:active::after {
 
 /* Mobile Optimizations */
 @media (max-width: 420px) {
+  /* Migliora distribuzione verticale */
+  .mobile-gameplay-layout {
+    @apply space-y-6;
+  }
+  
   #hudCompact {
-    @apply max-h-[90px];
+    @apply max-h-[110px] py-2;
+  }
+  
+  #canvas {
+    @apply mt-2;
   }
   
   #streakChip {

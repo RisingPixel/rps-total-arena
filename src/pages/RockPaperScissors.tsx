@@ -492,7 +492,7 @@ const RockPaperScissors = () => {
 
         {/* Running Phase */}
         {gamePhase === 'running' && (
-          <div className="space-y-4">
+          <div className="space-y-4 mobile-gameplay-layout">
             {/* Ultra-Compact HUD */}
             <div id="hudCompact" className="hud-compact-container">
               {/* Top Row: Title + Win Streak */}
