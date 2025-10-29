@@ -29,13 +29,10 @@ export default defineConfig(() => ({
     // Inline small assets to reduce HTTP requests
     assetsInlineLimit: 10000,
     
-    // Aggressive minification
-    minify: 'terser' as const,
-    terserOptions: {
-      compress: {
-        drop_console: true,
-        drop_debugger: true,
-      },
+    // Minification with esbuild (faster, no extra deps)
+    minify: true,
+    esbuild: {
+      drop: ['console', 'debugger'],
     },
   },
 }));
