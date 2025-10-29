@@ -6,6 +6,7 @@ const App = () => (
   <BrowserRouter>
     <Routes>
       <Route path="/" element={<RockPaperScissors />} />
+      <Route path="/index.html" element={<RockPaperScissors />} />
       {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
       <Route path="*" element={<NotFound />} />
     </Routes>
