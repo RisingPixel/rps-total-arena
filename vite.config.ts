@@ -4,6 +4,7 @@ import path from "path";
 
 // https://vitejs.dev/config/
 export default defineConfig(() => ({
+  base: './', // Critical for Poki - use relative paths for all assets
   server: {
     host: "::",
     port: 8080,
