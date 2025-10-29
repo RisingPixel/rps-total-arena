@@ -456,15 +456,15 @@ const RockPaperScissors = () => {
         {/* Bet Screen */}
         {gamePhase === 'bet' && (
           <div id="betScreen" className="space-y-6">
-            <Card className="p-6 md:p-8 space-y-6 shadow-lg">
-              <div className="text-center">
-                <img 
-                  src={totalArenaLogo} 
-                  alt="Total Arena - Rock Paper Scissors" 
-                  className="mx-auto h-20 md:h-24 w-auto drop-shadow-lg"
-                />
-              </div>
-              
+            <div className="text-center mb-6">
+              <img 
+                src={totalArenaLogo} 
+                alt="Total Arena - Rock Paper Scissors" 
+                className="mx-auto h-24 md:h-32 w-auto drop-shadow-lg"
+              />
+            </div>
+            
+            <Card className="p-6 md:p-8 shadow-lg">
               <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 md:gap-6">
                 <button
                   data-bet="rock"
