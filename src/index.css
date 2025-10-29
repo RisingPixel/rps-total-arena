@@ -111,6 +111,36 @@ All colors MUST be HSL.
   }
 }
 
+/* Button Press Feedback */
+button {
+  @apply transition-transform duration-100 active:scale-95 relative overflow-hidden;
+}
+
+button::after {
+  content: '';
+  position: absolute;
+  inset: 0;
+  background: radial-gradient(circle, rgba(255,255,255,0.3) 0%, transparent 70%);
+  transform: scale(0);
+  opacity: 0;
+  pointer-events: none;
+}
+
+button:active::after {
+  animation: ripple 0.6s ease-out;
+}
+
+@keyframes ripple {
+  0% {
+    transform: scale(0);
+    opacity: 1;
+  }
+  100% {
+    transform: scale(2);
+    opacity: 0;
+  }
+}
+
 /* Bet Screen Styles */
 .bet-card {
   @apply flex flex-col items-center justify-center p-8 rounded-lg border-2 border-border bg-card transition-all duration-200 hover:scale-105 hover:shadow-lg cursor-pointer;
@@ -253,4 +283,147 @@ All colors MUST be HSL.
 
 .victory-actions {
   @apply flex gap-4 mt-4 flex-wrap justify-center;
+}
+
+/* Countdown Overlay */
+.countdown-overlay {
+  @apply fixed inset-0 bg-background/90 backdrop-blur-md z-40 flex items-center justify-center;
+}
+
+.countdown-number {
+  @apply text-9xl font-bold font-mono text-primary;
+  animation: countdownPulse 1s ease-out;
+}
+
+@keyframes countdownPulse {
+  0% {
+    transform: scale(0.5);
+    opacity: 0;
+  }
+  50% {
+    transform: scale(1.2);
+    opacity: 1;
+  }
+  100% {
+    transform: scale(1);
+    opacity: 1;
+  }
+}
+
+/* Bar Chart Counters */
+.counter-bar {
+  @apply flex flex-col items-start gap-1 flex-1;
+}
+
+.counter-header {
+  @apply flex items-center gap-2;
+}
+
+.bar-container {
+  @apply w-full h-8 bg-muted rounded-lg overflow-hidden relative;
+}
+
+.bar {
+  @apply h-full flex items-center justify-end px-2 transition-all duration-300 ease-out;
+}
+
+.bar-rock {
+  @apply bg-[hsl(var(--rock-color))];
+}
+
+.bar-paper {
+  @apply bg-[hsl(var(--paper-color))];
+}
+
+.bar-scissors {
+  @apply bg-[hsl(var(--scissors-color))];
+}
+
+.bar-label {
+  @apply text-white font-mono font-bold text-sm drop-shadow-md;
+}
+
+/* Momentum Indicator */
+.momentum-arrow {
+  @apply text-xs font-bold font-mono px-1.5 py-0.5 rounded-full;
+  animation: momentumSlide 0.3s ease-out;
+}
+
+.momentum-arrow.up {
+  @apply bg-green-500/20 text-green-600;
+}
+
+.momentum-arrow.down {
+  @apply bg-red-500/20 text-red-600;
+}
+
+@keyframes momentumSlide {
+  0% {
+    transform: translateY(-5px);
+    opacity: 0;
+  }
+  100% {
+    transform: translateY(0);
+    opacity: 1;
+  }
+}
+
+/* Confetti */
+.confetti-container {
+  @apply fixed inset-0 pointer-events-none z-[60] overflow-hidden;
+}
+
+.confetti-piece {
+  @apply absolute text-2xl opacity-0;
+  left: var(--x);
+  top: -50px;
+  animation: confettiFall var(--duration) linear var(--delay) forwards;
+}
+
+@keyframes confettiFall {
+  0% {
+    transform: translateY(0) rotate(0deg);
+    opacity: 1;
+  }
+  100% {
+    transform: translateY(100vh) rotate(720deg);
+    opacity: 0;
+  }
+}
+
+/* Stats Recap */
+.stats-recap {
+  @apply grid grid-cols-3 gap-4 my-6;
+}
+
+.stat-item {
+  @apply flex flex-col items-center gap-1 p-3 bg-card/50 rounded-lg border border-border;
+}
+
+.stat-icon {
+  @apply text-3xl;
+}
+
+.stat-value {
+  @apply text-2xl font-bold font-mono text-primary;
+}
+
+.stat-label {
+  @apply text-xs text-muted-foreground font-mono;
+}
+
+.animate-stat-slide {
+  animation: statSlide 0.4s ease-out forwards;
+  opacity: 0;
+}
+
+@keyframes statSlide {
+  0% {
+    transform: translateY(20px);
+    opacity: 0;
+  }
+  100% {
+    transform: translateY(0);
+    opacity: 1;
+  }
 }

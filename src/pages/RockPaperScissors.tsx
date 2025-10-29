@@ -77,6 +77,17 @@ const RockPaperScissors = () => {
   
   // Live counters
   const [counts, setCounts] = useState({ rock: 0, paper: 0, scissors: 0 });
+  const [prevCounts, setPrevCounts] = useState({ rock: 0, paper: 0, scissors: 0 });
+  
+  // Juiciness state
+  const [countdown, setCountdown] = useState<number | null>(null);
+  const [isSlowMotion, setIsSlowMotion] = useState(false);
+  const [showConfetti, setShowConfetti] = useState(false);
+  const [battleStats, setBattleStats] = useState({
+    startTime: 0,
+    totalCollisions: 0,
+    duration: 0
+  });
   
   const entitiesRef = useRef<Entity[]>([]);
   const animationFrameRef = useRef<number>();
@@ -88,6 +99,33 @@ const RockPaperScissors = () => {
       setStreak(parseInt(savedStreak, 10));
     }
   }, []);
+
+  // Countdown effect
+  useEffect(() => {
+    if (countdown === null) return;
+    
+    if (countdown > 0) {
+      const timer = setTimeout(() => {
+        setCountdown(countdown - 1);
+      }, 1000);
+      return () => clearTimeout(timer);
+    } else {
+      // Countdown finished, start game
+      setCountdown(null);
+      setGamePhase('running');
+      setIsRunning(true);
+      setIsPaused(false);
+      initializeEntities();
+      setBattleStats(prev => ({ ...prev, startTime: Date.now() }));
+    }
+  }, [countdown]);
+
+  // Track stats when game starts
+  useEffect(() => {
+    if (gamePhase === 'running' && isRunning && battleStats.startTime === 0) {
+      setBattleStats(prev => ({ ...prev, startTime: Date.now() }));
+    }
+  }, [gamePhase, isRunning]);
 
   const initializeEntities = () => {
     const entities: Entity[] = [];
@@ -151,11 +189,13 @@ const RockPaperScissors = () => {
     setPaperCount(count);
     setScissorsCount(count);
     
-    // Start game immediately
-    setGamePhase('running');
-    setIsRunning(true);
-    setIsPaused(false);
-    initializeEntities();
+    // Reset juiciness state
+    setIsSlowMotion(false);
+    setShowConfetti(false);
+    setBattleStats({ startTime: 0, totalCollisions: 0, duration: 0 });
+    
+    // Start countdown
+    setCountdown(3);
   };
 
   const handleSpeedChange = (newSpeed: number[]) => {
@@ -179,6 +219,16 @@ const RockPaperScissors = () => {
     setGamePhase('victory');
     setIsRunning(false);
     
+    // Calculate battle stats
+    const duration = Math.round((Date.now() - battleStats.startTime) / 1000);
+    setBattleStats(prev => ({ ...prev, duration }));
+    
+    // Trigger confetti for victory
+    if (winningType === playerBet) {
+      setShowConfetti(true);
+      setTimeout(() => setShowConfetti(false), 3000);
+    }
+    
     if (winningType === playerBet) {
       // Increment streak
       const newStreak = streak + 1;
@@ -197,8 +247,11 @@ const RockPaperScissors = () => {
     setIsPaused(false);
     setWinner(null);
     setPlayerBet(null);
+    setIsSlowMotion(false);
+    setShowConfetti(false);
     entitiesRef.current = [];
     setCounts({ rock: 0, paper: 0, scissors: 0 });
+    setPrevCounts({ rock: 0, paper: 0, scissors: 0 });
     
     if (canvasRef.current) {
       const ctx = canvasRef.current.getContext("2d");
@@ -219,6 +272,15 @@ const RockPaperScissors = () => {
     // Clear canvas
     ctx.fillStyle = "#f8fafc";
     ctx.fillRect(0, 0, canvas.width, canvas.height);
+    
+    // Apply slow-motion spotlight effect
+    if (isSlowMotion) {
+      ctx.save();
+      ctx.globalAlpha = 0.5;
+      ctx.fillStyle = "#000000";
+      ctx.fillRect(0, 0, canvas.width, canvas.height);
+      ctx.restore();
+    }
     
     const entities = entitiesRef.current;
     
@@ -264,9 +326,11 @@ const RockPaperScissors = () => {
           
           if (winner !== entities[i].type) {
             entities[i].type = winner;
+            setBattleStats(prev => ({ ...prev, totalCollisions: prev.totalCollisions + 1 }));
           }
           if (winner !== entities[j].type) {
             entities[j].type = winner;
+            setBattleStats(prev => ({ ...prev, totalCollisions: prev.totalCollisions + 1 }));
           }
         }
       }
@@ -286,7 +350,30 @@ const RockPaperScissors = () => {
     entities.forEach((entity) => {
       newCounts[entity.type]++;
     });
+    
+    // Save previous counts for momentum
+    setPrevCounts(counts);
     setCounts(newCounts);
+    
+    // Check for slow-motion trigger (2 species with <10 entities)
+    const typesWithEntities = Object.keys(newCounts).filter(
+      (type) => newCounts[type as EntityType] > 0
+    );
+    
+    if (typesWithEntities.length === 2 && !isSlowMotion) {
+      const losingTypes = typesWithEntities.filter(
+        (type) => newCounts[type as EntityType] < 10
+      );
+      
+      if (losingTypes.length > 0) {
+        setIsSlowMotion(true);
+        // Reduce speed to 30%
+        entitiesRef.current.forEach(entity => {
+          entity.vx *= 0.3;
+          entity.vy *= 0.3;
+        });
+      }
+    }
     
     const types = Object.keys(newCounts).filter((type) => newCounts[type as EntityType] > 0);
     if (types.length === 1 && entities.length > 0) {
@@ -388,23 +475,79 @@ const RockPaperScissors = () => {
           </div>
         )}
 
+        {/* Countdown Overlay */}
+        {countdown !== null && (
+          <div className="countdown-overlay">
+            <div className="countdown-number">
+              {countdown === 0 ? 'GO!' : countdown}
+            </div>
+          </div>
+        )}
+
         {/* Running Phase */}
         {gamePhase === 'running' && (
           <div className="space-y-4">
             {/* HUD */}
             <div id="hud" className="hud-container">
               <div className="counters-row">
-                <div className="counter">
-                  <span className="emoji">🪨</span>
-                  <span className="count">{counts.rock}</span>
+                {/* Rock Counter */}
+                <div className="counter-bar">
+                  <div className="counter-header">
+                    <span className="emoji">🪨</span>
+                    {prevCounts.rock !== 0 && counts.rock !== prevCounts.rock && (
+                      <span className={`momentum-arrow ${counts.rock > prevCounts.rock ? 'up' : 'down'}`}>
+                        {counts.rock > prevCounts.rock ? '↑' : '↓'} {Math.abs(counts.rock - prevCounts.rock)}
+                      </span>
+                    )}
+                  </div>
+                  <div className="bar-container">
+                    <div 
+                      className="bar bar-rock" 
+                      style={{ width: `${(counts.rock / (counts.rock + counts.paper + counts.scissors)) * 100}%` }}
+                    >
+                      <span className="bar-label">{counts.rock}</span>
+                    </div>
+                  </div>
                 </div>
-                <div className="counter">
-                  <span className="emoji">📜</span>
-                  <span className="count">{counts.paper}</span>
+                
+                {/* Paper Counter */}
+                <div className="counter-bar">
+                  <div className="counter-header">
+                    <span className="emoji">📜</span>
+                    {prevCounts.paper !== 0 && counts.paper !== prevCounts.paper && (
+                      <span className={`momentum-arrow ${counts.paper > prevCounts.paper ? 'up' : 'down'}`}>
+                        {counts.paper > prevCounts.paper ? '↑' : '↓'} {Math.abs(counts.paper - prevCounts.paper)}
+                      </span>
+                    )}
+                  </div>
+                  <div className="bar-container">
+                    <div 
+                      className="bar bar-paper" 
+                      style={{ width: `${(counts.paper / (counts.rock + counts.paper + counts.scissors)) * 100}%` }}
+                    >
+                      <span className="bar-label">{counts.paper}</span>
+                    </div>
+                  </div>
                 </div>
-                <div className="counter">
-                  <span className="emoji">✂️</span>
-                  <span className="count">{counts.scissors}</span>
+                
+                {/* Scissors Counter */}
+                <div className="counter-bar">
+                  <div className="counter-header">
+                    <span className="emoji">✂️</span>
+                    {prevCounts.scissors !== 0 && counts.scissors !== prevCounts.scissors && (
+                      <span className={`momentum-arrow ${counts.scissors > prevCounts.scissors ? 'up' : 'down'}`}>
+                        {counts.scissors > prevCounts.scissors ? '↑' : '↓'} {Math.abs(counts.scissors - prevCounts.scissors)}
+                      </span>
+                    )}
+                  </div>
+                  <div className="bar-container">
+                    <div 
+                      className="bar bar-scissors" 
+                      style={{ width: `${(counts.scissors / (counts.rock + counts.paper + counts.scissors)) * 100}%` }}
+                    >
+                      <span className="bar-label">{counts.scissors}</span>
+                    </div>
+                  </div>
                 </div>
               </div>
               
@@ -484,6 +627,25 @@ const RockPaperScissors = () => {
             aria-labelledby="winnerTitle"
           >
             <div className="winner-content">
+              {/* Confetti */}
+              {showConfetti && (
+                <div className="confetti-container">
+                  {Array.from({ length: 50 }).map((_, i) => (
+                    <div 
+                      key={i}
+                      className="confetti-piece"
+                      style={{
+                        '--x': `${Math.random() * 100}vw`,
+                        '--duration': `${2 + Math.random() * 2}s`,
+                        '--delay': `${Math.random() * 0.5}s`,
+                      } as React.CSSProperties}
+                    >
+                      {EMOJI_MAP[winner]}
+                    </div>
+                  ))}
+                </div>
+              )}
+              
               <div 
                 id="winnerEmoji" 
                 className="winner-emoji-burst"
@@ -501,6 +663,27 @@ const RockPaperScissors = () => {
               <p className="dominance-text">
                 {STRINGS[lang].dominanceAchieved}
               </p>
+              
+              {/* Stats Recap */}
+              <div className="stats-recap">
+                <div className="stat-item animate-stat-slide" style={{ animationDelay: '0.2s' }}>
+                  <span className="stat-icon">⏱️</span>
+                  <span className="stat-value">{battleStats.duration}s</span>
+                  <span className="stat-label">Battle Duration</span>
+                </div>
+                
+                <div className="stat-item animate-stat-slide" style={{ animationDelay: '0.4s' }}>
+                  <span className="stat-icon">💥</span>
+                  <span className="stat-value">{battleStats.totalCollisions}</span>
+                  <span className="stat-label">Collisions</span>
+                </div>
+                
+                <div className="stat-item animate-stat-slide" style={{ animationDelay: '0.6s' }}>
+                  <span className="stat-icon">👑</span>
+                  <span className="stat-value">{EMOJI_MAP[winner]}</span>
+                  <span className="stat-label">Champion</span>
+                </div>
+              </div>
               
               {winner === playerBet && streak > 0 && (
                 <div 
