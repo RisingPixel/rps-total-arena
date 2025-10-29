@@ -26,9 +26,6 @@ const SPAWN_PRESETS = [15, 20, 25];
 
 const STRINGS = {
   en: {
-    chooseChampion: "Choose Your Champion",
-    whoDominate: "Who will dominate the arena?",
-    yourBet: "Your bet:",
     winStreak: "win streak",
     victoryYou: "Victory! 🎉",
     victoryOther: "Defeat 😔",
@@ -36,24 +33,6 @@ const STRINGS = {
     playAgain: "Play Again",
     continue: "Continue",
     speed: "Speed",
-    pause: "Pause",
-    resume: "Resume",
-    reset: "Reset",
-  },
-  it: {
-    chooseChampion: "Scegli il Tuo Campione",
-    whoDominate: "Chi dominerà l'arena?",
-    yourBet: "La tua scommessa:",
-    winStreak: "vittorie consecutive",
-    victoryYou: "Vittoria! 🎉",
-    victoryOther: "Sconfitta 😔",
-    dominanceAchieved: "Dominazione totale raggiunta",
-    playAgain: "Gioca Ancora",
-    continue: "Continua",
-    speed: "Velocità",
-    pause: "Pausa",
-    resume: "Riprendi",
-    reset: "Reset",
   },
 };
 
@@ -67,7 +46,6 @@ const RockPaperScissors = () => {
   const [playerBet, setPlayerBet] = useState<EntityType | null>(null);
   const [streak, setStreak] = useState(0);
   const [gamePhase, setGamePhase] = useState<GamePhase>("bet");
-  const [lang] = useState<'en' | 'it'>('en');
   
   // Configuration state
   const [rockCount, setRockCount] = useState(20);
@@ -622,7 +600,7 @@ const RockPaperScissors = () => {
             <Card className="p-4">
               <div className="space-y-2">
                 <label className="text-sm font-medium font-mono" id="speedSlider">
-                  {STRINGS[lang].speed}: {speed}x
+                  {STRINGS.en.speed}: {speed}x
                 </label>
                 <Slider
                   value={[speed]}
@@ -675,12 +653,12 @@ const RockPaperScissors = () => {
               
               <h2 id="winnerTitle" className="winner-title">
                 {winner === playerBet 
-                  ? STRINGS[lang].victoryYou 
-                  : STRINGS[lang].victoryOther}
+                  ? STRINGS.en.victoryYou 
+                  : STRINGS.en.victoryOther}
               </h2>
               
               <p className="dominance-text">
-                {STRINGS[lang].dominanceAchieved}
+                {STRINGS.en.dominanceAchieved}
               </p>
               
               {/* Stats Recap */}
@@ -713,7 +691,7 @@ const RockPaperScissors = () => {
                   <span className="streak-emoji">🔥</span>
                   <span className="streak-number">{streak}</span>
                   <span className="streak-label">
-                    {STRINGS[lang].winStreak}
+                    {STRINGS.en.winStreak}
                   </span>
                 </div>
               )}
@@ -725,7 +703,7 @@ const RockPaperScissors = () => {
                   size="lg"
                   className="font-mono"
                 >
-                  {STRINGS[lang].playAgain}
+                  {STRINGS.en.playAgain}
                 </Button>
                 
                 <Button 
@@ -735,7 +713,7 @@ const RockPaperScissors = () => {
                   size="lg"
                   className="font-mono"
                 >
-                  {STRINGS[lang].continue}
+                  {STRINGS.en.continue}
                 </Button>
               </div>
             </div>
