@@ -285,11 +285,6 @@ button:active::after {
     @apply max-h-[90px];
   }
   
-  .game-title-logo {
-    @apply h-5;
-    max-width: 200px;
-  }
-  
   #streakChip {
     @apply text-[10px] px-2 py-0.5;
   }
