@@ -4,6 +4,7 @@ import { Slider } from "@/components/ui/slider";
 import { Card } from "@/components/ui/card";
 
 type EntityType = "rock" | "paper" | "scissors";
+type GamePhase = "bet" | "running" | "victory";
 
 interface Entity {
   x: number;
@@ -20,24 +21,73 @@ const EMOJI_MAP = {
   scissors: "✂️",
 };
 
+const SPAWN_PRESETS = [15, 20, 25];
+
+const STRINGS = {
+  en: {
+    chooseChampion: "Choose Your Champion",
+    whoDominate: "Who will dominate the arena?",
+    yourBet: "Your bet:",
+    winStreak: "win streak",
+    victoryYou: "Victory! 🎉",
+    victoryOther: "Defeat 😔",
+    dominanceAchieved: "Total domination achieved",
+    playAgain: "Play Again",
+    continue: "Continue",
+    speed: "Speed",
+    pause: "Pause",
+    resume: "Resume",
+    reset: "Reset",
+  },
+  it: {
+    chooseChampion: "Scegli il Tuo Campione",
+    whoDominate: "Chi dominerà l'arena?",
+    yourBet: "La tua scommessa:",
+    winStreak: "vittorie consecutive",
+    victoryYou: "Vittoria! 🎉",
+    victoryOther: "Sconfitta 😔",
+    dominanceAchieved: "Dominazione totale raggiunta",
+    playAgain: "Gioca Ancora",
+    continue: "Continua",
+    speed: "Velocità",
+    pause: "Pausa",
+    resume: "Riprendi",
+    reset: "Reset",
+  },
+};
+
 const RockPaperScissors = () => {
   const canvasRef = useRef<HTMLCanvasElement>(null);
   const [isRunning, setIsRunning] = useState(false);
   const [isPaused, setIsPaused] = useState(false);
   const [winner, setWinner] = useState<EntityType | null>(null);
   
+  // Bet & watch mode state
+  const [playerBet, setPlayerBet] = useState<EntityType | null>(null);
+  const [streak, setStreak] = useState(0);
+  const [gamePhase, setGamePhase] = useState<GamePhase>("bet");
+  const [lang] = useState<'en' | 'it'>('en');
+  
   // Configuration state
   const [rockCount, setRockCount] = useState(20);
   const [paperCount, setPaperCount] = useState(20);
   const [scissorsCount, setScissorsCount] = useState(20);
   const [speed, setSpeed] = useState(2);
-  const [arenaSize, setArenaSize] = useState(600);
+  const [arenaSize] = useState(600);
   
   // Live counters
   const [counts, setCounts] = useState({ rock: 0, paper: 0, scissors: 0 });
   
   const entitiesRef = useRef<Entity[]>([]);
   const animationFrameRef = useRef<number>();
+  
+  // Load streak from localStorage
+  useEffect(() => {
+    const savedStreak = localStorage.getItem('rps_streak');
+    if (savedStreak) {
+      setStreak(parseInt(savedStreak, 10));
+    }
+  }, []);
 
   const initializeEntities = () => {
     const entities: Entity[] = [];
@@ -87,6 +137,76 @@ const RockPaperScissors = () => {
       newCounts[entity.type]++;
     });
     setCounts(newCounts);
+  };
+
+  const handleBet = (bet: EntityType) => {
+    setPlayerBet(bet);
+    
+    // Randomize spawn preset
+    const presetIndex = Math.floor(Math.random() * SPAWN_PRESETS.length);
+    const count = SPAWN_PRESETS[presetIndex];
+    
+    // Set equalized counts
+    setRockCount(count);
+    setPaperCount(count);
+    setScissorsCount(count);
+    
+    // Start game immediately
+    setGamePhase('running');
+    setIsRunning(true);
+    setIsPaused(false);
+    initializeEntities();
+  };
+
+  const handleSpeedChange = (newSpeed: number[]) => {
+    setSpeed(newSpeed[0]);
+    // Update velocities of existing entities
+    entitiesRef.current.forEach(entity => {
+      const currentSpeed = Math.sqrt(entity.vx ** 2 + entity.vy ** 2);
+      if (currentSpeed > 0) {
+        const direction = { 
+          x: entity.vx / currentSpeed, 
+          y: entity.vy / currentSpeed 
+        };
+        entity.vx = direction.x * newSpeed[0];
+        entity.vy = direction.y * newSpeed[0];
+      }
+    });
+  };
+
+  const handleWinner = (winningType: EntityType) => {
+    setWinner(winningType);
+    setGamePhase('victory');
+    setIsRunning(false);
+    
+    if (winningType === playerBet) {
+      // Increment streak
+      const newStreak = streak + 1;
+      setStreak(newStreak);
+      localStorage.setItem('rps_streak', newStreak.toString());
+    } else {
+      // Reset streak
+      setStreak(0);
+      localStorage.setItem('rps_streak', '0');
+    }
+  };
+
+  const handlePlayAgain = () => {
+    setGamePhase('bet');
+    setIsRunning(false);
+    setIsPaused(false);
+    setWinner(null);
+    setPlayerBet(null);
+    entitiesRef.current = [];
+    setCounts({ rock: 0, paper: 0, scissors: 0 });
+    
+    if (canvasRef.current) {
+      const ctx = canvasRef.current.getContext("2d");
+      if (ctx) {
+        ctx.fillStyle = "#f8fafc";
+        ctx.fillRect(0, 0, canvasRef.current.width, canvasRef.current.height);
+      }
+    }
   };
 
   const animate = () => {
@@ -170,8 +290,8 @@ const RockPaperScissors = () => {
     
     const types = Object.keys(newCounts).filter((type) => newCounts[type as EntityType] > 0);
     if (types.length === 1 && entities.length > 0) {
-      setWinner(types[0] as EntityType);
-      setIsRunning(false);
+      handleWinner(types[0] as EntityType);
+      return;
     }
     
     if (isRunning) {
@@ -198,138 +318,111 @@ const RockPaperScissors = () => {
         e.preventDefault();
         setIsPaused(!isPaused);
       }
+      
+      if (e.code === "Escape" && gamePhase === 'victory') {
+        e.preventDefault();
+        handlePlayAgain();
+      }
     };
     
     window.addEventListener("keydown", handleKeyPress);
     return () => window.removeEventListener("keydown", handleKeyPress);
-  }, [isRunning, isPaused]);
+  }, [isRunning, isPaused, gamePhase]);
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-background via-background to-accent/10 p-8">
+    <div className="min-h-screen bg-gradient-to-br from-background via-background to-accent/10 p-4 md:p-8">
       <div className="max-w-6xl mx-auto space-y-6">
         {/* Header */}
         <div className="text-center space-y-2">
-          <h1 className="text-5xl font-bold text-foreground font-mono">
+          <h1 className="text-4xl md:text-5xl font-bold text-foreground font-mono">
             Rock Paper Scissors Live
           </h1>
-          <p className="text-lg text-muted-foreground font-mono">
-            Who will dominate the arena?
+          <p className="text-base md:text-lg text-muted-foreground font-mono">
+            {STRINGS[lang].whoDominate}
           </p>
         </div>
 
-        {/* Configuration Panel */}
-        {!isRunning && (
-          <Card id="configPanel" className="p-6 space-y-6 shadow-lg">
-            <h2 className="text-xl font-semibold font-mono">Configuration</h2>
-            
-            <div className="grid md:grid-cols-2 gap-6">
-              <div className="space-y-2">
-                <label className="text-sm font-medium font-mono flex items-center gap-2">
-                  🪨 Rocks: {rockCount}
-                </label>
-                <Slider
-                  value={[rockCount]}
-                  onValueChange={(v) => setRockCount(v[0])}
-                  min={0}
-                  max={100}
-                  step={1}
-                />
-              </div>
+        {/* Bet Screen */}
+        {gamePhase === 'bet' && (
+          <div id="betScreen" className="space-y-6">
+            <Card className="p-6 md:p-8 space-y-6 shadow-lg">
+              <h2 className="text-2xl md:text-3xl font-bold text-center font-mono">
+                {STRINGS[lang].chooseChampion}
+              </h2>
               
-              <div className="space-y-2">
-                <label className="text-sm font-medium font-mono flex items-center gap-2">
-                  📜 Papers: {paperCount}
-                </label>
-                <Slider
-                  value={[paperCount]}
-                  onValueChange={(v) => setPaperCount(v[0])}
-                  min={0}
-                  max={100}
-                  step={1}
-                />
-              </div>
-              
-              <div className="space-y-2">
-                <label className="text-sm font-medium font-mono flex items-center gap-2">
-                  ✂️ Scissors: {scissorsCount}
-                </label>
-                <Slider
-                  value={[scissorsCount]}
-                  onValueChange={(v) => setScissorsCount(v[0])}
-                  min={0}
-                  max={100}
-                  step={1}
-                />
-              </div>
-              
-              <div className="space-y-2">
-                <label className="text-sm font-medium font-mono">
-                  Speed: {speed}x
-                </label>
-                <Slider
-                  value={[speed]}
-                  onValueChange={(v) => setSpeed(v[0])}
-                  min={0.5}
-                  max={5}
-                  step={0.5}
-                />
-              </div>
-              
-              <div className="space-y-2 md:col-span-2">
-                <label className="text-sm font-medium font-mono">
-                  Arena Size: {arenaSize}px
-                </label>
-                <Slider
-                  value={[arenaSize]}
-                  onValueChange={(v) => setArenaSize(v[0])}
-                  min={400}
-                  max={800}
-                  step={50}
-                />
-              </div>
-            </div>
-            
-            <Button
-              id="startBtn"
-              onClick={() => {
-                if (rockCount + paperCount + scissorsCount > 200) {
-                  alert("Maximum 200 entities allowed!");
-                  return;
-                }
+              <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 md:gap-6">
+                <button
+                  data-bet="rock"
+                  onClick={() => handleBet('rock')}
+                  className="bet-card group"
+                >
+                  <span className="text-7xl md:text-8xl mb-4 block group-hover:scale-110 transition-transform">
+                    🪨
+                  </span>
+                  <span className="text-xl md:text-2xl font-bold font-mono">Rock</span>
+                </button>
                 
-                setWinner(null);
-                setIsRunning(true);
-                setIsPaused(false);
-                initializeEntities();
-              }}
-              className="w-full font-mono text-lg"
-              size="lg"
-            >
-              Start Simulation
-            </Button>
-          </Card>
-        )}
-
-        {/* Canvas and Controls */}
-        {isRunning && (
-          <div className="space-y-4">
-            {/* Live Counter */}
-            <Card id="counter" className="p-4">
-              <div className="flex justify-around items-center font-mono text-lg">
-                <div className="flex items-center gap-2">
-                  <span className="text-3xl">🪨</span>
-                  <span className="font-bold">{counts.rock}</span>
-                </div>
-                <div className="flex items-center gap-2">
-                  <span className="text-3xl">📜</span>
-                  <span className="font-bold">{counts.paper}</span>
-                </div>
-                <div className="flex items-center gap-2">
-                  <span className="text-3xl">✂️</span>
-                  <span className="font-bold">{counts.scissors}</span>
-                </div>
+                <button
+                  data-bet="paper"
+                  onClick={() => handleBet('paper')}
+                  className="bet-card group"
+                >
+                  <span className="text-7xl md:text-8xl mb-4 block group-hover:scale-110 transition-transform">
+                    📜
+                  </span>
+                  <span className="text-xl md:text-2xl font-bold font-mono">Paper</span>
+                </button>
+                
+                <button
+                  data-bet="scissors"
+                  onClick={() => handleBet('scissors')}
+                  className="bet-card group"
+                >
+                  <span className="text-7xl md:text-8xl mb-4 block group-hover:scale-110 transition-transform">
+                    ✂️
+                  </span>
+                  <span className="text-xl md:text-2xl font-bold font-mono">Scissors</span>
+                </button>
               </div>
             </Card>
+          </div>
+        )}
+
+        {/* Running Phase */}
+        {gamePhase === 'running' && (
+          <div className="space-y-4">
+            {/* HUD */}
+            <div id="hud" className="hud-container">
+              <div className="counters-row">
+                <div className="counter">
+                  <span className="emoji">🪨</span>
+                  <span className="count">{counts.rock}</span>
+                </div>
+                <div className="counter">
+                  <span className="emoji">📜</span>
+                  <span className="count">{counts.paper}</span>
+                </div>
+                <div className="counter">
+                  <span className="emoji">✂️</span>
+                  <span className="count">{counts.scissors}</span>
+                </div>
+              </div>
+              
+              <div 
+                id="betPill" 
+                className="bet-pill"
+                aria-live="polite"
+                data-bet-type={playerBet || undefined}
+              >
+                {STRINGS[lang].yourBet} {EMOJI_MAP[playerBet!]} {playerBet}
+              </div>
+              
+              {streak > 0 && (
+                <div className="streak-badge" aria-live="polite">
+                  🔥 {streak} {STRINGS[lang].winStreak}
+                </div>
+              )}
+            </div>
 
             {/* Canvas */}
             <div className="flex justify-center">
@@ -338,83 +431,113 @@ const RockPaperScissors = () => {
                 ref={canvasRef}
                 width={arenaSize}
                 height={arenaSize}
-                className="border-4 border-border rounded-lg shadow-lg bg-slate-50"
+                className="border-4 border-border rounded-lg shadow-lg bg-slate-50 max-w-full"
               />
             </div>
 
+            {/* Speed Control */}
+            <Card className="p-4">
+              <div className="space-y-2">
+                <label className="text-sm font-medium font-mono" id="speedSlider">
+                  {STRINGS[lang].speed}: {speed}x
+                </label>
+                <Slider
+                  value={[speed]}
+                  onValueChange={handleSpeedChange}
+                  min={0.5}
+                  max={5}
+                  step={0.5}
+                  aria-labelledby="speedSlider"
+                />
+              </div>
+            </Card>
+
             {/* Controls */}
-            <div className="flex gap-4 justify-center">
+            <div className="flex gap-4 justify-center flex-wrap">
               <Button
-                onClick={() => {
-                  if (isRunning) {
-                    setIsPaused(!isPaused);
-                  }
-                }}
+                onClick={() => setIsPaused(!isPaused)}
                 variant="secondary"
                 className="font-mono"
                 size="lg"
               >
-                {isPaused ? "Resume [Space]" : "Pause [Space]"}
+                {isPaused ? `${STRINGS[lang].resume} [Space]` : `${STRINGS[lang].pause} [Space]`}
               </Button>
               <Button
                 id="resetBtn"
-                onClick={() => {
-                  setIsRunning(false);
-                  setIsPaused(false);
-                  setWinner(null);
-                  entitiesRef.current = [];
-                  setCounts({ rock: 0, paper: 0, scissors: 0 });
-                  
-                  if (canvasRef.current) {
-                    const ctx = canvasRef.current.getContext("2d");
-                    if (ctx) {
-                      ctx.fillStyle = "#f8fafc";
-                      ctx.fillRect(0, 0, canvasRef.current.width, canvasRef.current.height);
-                    }
-                  }
-                }}
+                onClick={handlePlayAgain}
                 variant="outline"
                 className="font-mono"
                 size="lg"
               >
-                Reset
+                {STRINGS[lang].reset}
               </Button>
             </div>
           </div>
         )}
 
-        {/* Winner Message */}
-        {winner && (
-          <Card id="winner" className="p-8 text-center space-y-4 shadow-lg animate-fade-in">
-            <div className="text-6xl">{EMOJI_MAP[winner]}</div>
-            <h2 className="text-3xl font-bold font-mono">
-              {winner.charAt(0).toUpperCase() + winner.slice(1)} Wins!
-            </h2>
-            <p className="text-lg text-muted-foreground font-mono">
-              Total domination achieved
-            </p>
-            <Button
-              onClick={() => {
-                setIsRunning(false);
-                setIsPaused(false);
-                setWinner(null);
-                entitiesRef.current = [];
-                setCounts({ rock: 0, paper: 0, scissors: 0 });
+        {/* Victory Overlay */}
+        {gamePhase === 'victory' && winner && (
+          <div 
+            id="winnerOverlay" 
+            className="winner-overlay"
+            role="dialog"
+            aria-labelledby="winnerTitle"
+          >
+            <div className="winner-content">
+              <div 
+                id="winnerEmoji" 
+                className="winner-emoji-burst"
+                data-emoji={EMOJI_MAP[winner]}
+              >
+                {EMOJI_MAP[winner]}
+              </div>
+              
+              <h2 id="winnerTitle" className="winner-title">
+                {winner === playerBet 
+                  ? STRINGS[lang].victoryYou 
+                  : STRINGS[lang].victoryOther}
+              </h2>
+              
+              <p className="dominance-text">
+                {STRINGS[lang].dominanceAchieved}
+              </p>
+              
+              {winner === playerBet && streak > 0 && (
+                <div 
+                  id="streakCount" 
+                  className="streak-display"
+                  aria-live="polite"
+                >
+                  <span className="streak-emoji">🔥</span>
+                  <span className="streak-number">{streak}</span>
+                  <span className="streak-label">
+                    {STRINGS[lang].winStreak}
+                  </span>
+                </div>
+              )}
+              
+              <div className="victory-actions">
+                <Button 
+                  id="playAgainBtn"
+                  onClick={handlePlayAgain}
+                  size="lg"
+                  className="font-mono"
+                >
+                  {STRINGS[lang].playAgain}
+                </Button>
                 
-                if (canvasRef.current) {
-                  const ctx = canvasRef.current.getContext("2d");
-                  if (ctx) {
-                    ctx.fillStyle = "#f8fafc";
-                    ctx.fillRect(0, 0, canvasRef.current.width, canvasRef.current.height);
-                  }
-                }
-              }}
-              size="lg"
-              className="font-mono"
-            >
-              Play Again
-            </Button>
-          </Card>
+                <Button 
+                  id="continueBtn"
+                  onClick={handlePlayAgain}
+                  variant="secondary"
+                  size="lg"
+                  className="font-mono"
+                >
+                  {STRINGS[lang].continue}
+                </Button>
+              </div>
+            </div>
+          </div>
         )}
       </div>
     </div>

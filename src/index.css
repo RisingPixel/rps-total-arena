@@ -110,3 +110,147 @@ All colors MUST be HSL.
     @apply bg-background text-foreground;
   }
 }
+
+/* Bet Screen Styles */
+.bet-card {
+  @apply flex flex-col items-center justify-center p-8 rounded-lg border-2 border-border bg-card transition-all duration-200 hover:scale-105 hover:shadow-lg cursor-pointer;
+}
+
+.bet-card[data-bet="rock"]:hover {
+  @apply border-[hsl(var(--rock-color))] bg-[hsl(var(--rock-color))]/5;
+}
+
+.bet-card[data-bet="paper"]:hover {
+  @apply border-[hsl(var(--paper-color))] bg-[hsl(var(--paper-color))]/5;
+}
+
+.bet-card[data-bet="scissors"]:hover {
+  @apply border-[hsl(var(--scissors-color))] bg-[hsl(var(--scissors-color))]/5;
+}
+
+/* HUD Styles */
+.hud-container {
+  @apply sticky top-0 z-10 bg-card border-2 border-border rounded-lg shadow-lg p-4 flex flex-col gap-3;
+}
+
+.counters-row {
+  @apply flex justify-around font-mono text-lg md:text-xl;
+}
+
+.counter {
+  @apply flex items-center gap-2;
+}
+
+.counter .emoji {
+  @apply text-2xl md:text-3xl;
+}
+
+.counter .count {
+  @apply font-bold;
+}
+
+/* Bet Pill Styles */
+.bet-pill {
+  @apply inline-flex items-center gap-2 px-4 py-2 rounded-full font-semibold font-mono mx-auto border-2 transition-all;
+}
+
+.bet-pill[data-bet-type="rock"] {
+  @apply bg-[hsl(var(--rock-color))]/15 text-[hsl(var(--rock-color))] border-[hsl(var(--rock-color))];
+}
+
+.bet-pill[data-bet-type="paper"] {
+  @apply bg-[hsl(var(--paper-color))]/15 text-[hsl(var(--paper-color))] border-[hsl(var(--paper-color))];
+}
+
+.bet-pill[data-bet-type="scissors"] {
+  @apply bg-[hsl(var(--scissors-color))]/15 text-[hsl(var(--scissors-color))] border-[hsl(var(--scissors-color))];
+}
+
+/* Streak Badge */
+.streak-badge {
+  @apply inline-flex items-center gap-2 px-3 py-1 rounded-full bg-primary/10 text-primary font-mono font-bold text-sm mx-auto;
+}
+
+/* Victory Overlay */
+.winner-overlay {
+  @apply fixed inset-0 bg-background/95 backdrop-blur-sm z-50 flex items-center justify-center p-4 animate-fade-in;
+}
+
+.winner-content {
+  @apply flex flex-col items-center gap-6 text-center max-w-lg;
+}
+
+.winner-emoji-burst {
+  @apply text-[10rem] animate-emoji-explosion relative;
+}
+
+@keyframes emojiExplosion {
+  0% {
+    transform: scale(0);
+    opacity: 0;
+  }
+  50% {
+    transform: scale(1.3);
+    opacity: 1;
+  }
+  100% {
+    transform: scale(1);
+    opacity: 1;
+  }
+}
+
+@keyframes particleBurst {
+  0% {
+    transform: translate(0, 0) scale(1);
+    opacity: 1;
+  }
+  100% {
+    transform: translate(var(--tx, 0), var(--ty, 0)) scale(0);
+    opacity: 0;
+  }
+}
+
+.winner-emoji-burst::before,
+.winner-emoji-burst::after {
+  content: attr(data-emoji);
+  @apply absolute inset-0 opacity-50;
+  animation: particleBurst 1s ease-out forwards;
+}
+
+.winner-emoji-burst::before {
+  --tx: -100px;
+  --ty: -100px;
+}
+
+.winner-emoji-burst::after {
+  --tx: 100px;
+  --ty: -100px;
+}
+
+.winner-title {
+  @apply text-4xl md:text-5xl font-bold font-mono;
+}
+
+.dominance-text {
+  @apply text-lg md:text-xl text-muted-foreground font-mono;
+}
+
+.streak-display {
+  @apply flex items-center gap-3 bg-primary/10 px-6 py-3 rounded-full;
+}
+
+.streak-emoji {
+  @apply text-3xl;
+}
+
+.streak-number {
+  @apply text-4xl font-bold text-primary font-mono;
+}
+
+.streak-label {
+  @apply text-sm text-muted-foreground font-mono;
+}
+
+.victory-actions {
+  @apply flex gap-4 mt-4 flex-wrap justify-center;
+}
