@@ -16,6 +16,9 @@ export default defineConfig(() => ({
     },
   },
   build: {
+    // Explicitly set assets directory for Poki compatibility
+    assetsDir: 'assets',
+    
     // Disable source maps for Poki
     sourcemap: false,
     
