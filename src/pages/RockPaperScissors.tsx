@@ -522,7 +522,7 @@ const RockPaperScissors = () => {
                 <img 
                   src={totalArenaLogo} 
                   alt="Total Arena" 
-                  className="game-title-logo h-6 md:h-7 w-auto"
+                  className="game-title-logo h-7 md:h-8 w-auto mx-auto"
                 />
                 {streak > 0 && (
                   <div id="streakChip" className="streak-chip">

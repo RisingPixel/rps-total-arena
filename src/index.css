@@ -168,16 +168,16 @@ button:active::after {
 
 /* Top Row: Title + Streak Chip */
 .top-row {
-  @apply flex items-center justify-between gap-4;
+  @apply flex items-center justify-center gap-4 relative;
+}
+
+#streakChip {
+  @apply absolute right-0 px-3 py-1 bg-orange-500/20 text-orange-600 rounded-full text-xs font-bold font-mono flex items-center gap-1;
 }
 
 .game-title-logo {
   @apply object-contain;
   max-width: 280px;
-}
-
-#streakChip {
-  @apply px-3 py-1 bg-orange-500/20 text-orange-600 rounded-full text-xs font-bold font-mono flex items-center gap-1;
 }
 
 /* Counters Inline (sopra la barra) */
