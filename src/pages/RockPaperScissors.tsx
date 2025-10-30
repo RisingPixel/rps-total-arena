@@ -111,6 +111,14 @@ const RockPaperScissors = () => {
     }
   }, []);
 
+  // Call gameplayStart when SDK is ready and game loads
+  useEffect(() => {
+    if (isSDKReady) {
+      gameplayStart();
+      console.log("🎮 Poki: gameplayStart called on game load");
+    }
+  }, [isSDKReady, gameplayStart]);
+
   // Handle responsive arena size
   useEffect(() => {
     const handleResize = () => {
@@ -149,9 +157,6 @@ const RockPaperScissors = () => {
       initializeEntities();
       battleStatsRef.current.startTime = Date.now();
       battleStatsRef.current.totalCollisions = 0;
-      
-      // Fire Poki gameplay start
-      gameplayStart();
     }
   }, [countdown]);
 
