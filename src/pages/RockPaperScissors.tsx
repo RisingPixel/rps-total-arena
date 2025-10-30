@@ -20,6 +20,38 @@ interface Entity {
   scaleSpeed: number;
 }
 
+// Custom hook for animated counter numbers
+const useAnimatedCounter = (target: number, duration: number = 300) => {
+  const [current, setCurrent] = useState(target);
+  const prevTargetRef = useRef(target);
+
+  useEffect(() => {
+    if (prevTargetRef.current === target) return;
+    
+    const start = prevTargetRef.current;
+    const diff = target - start;
+    const startTime = Date.now();
+    
+    const animate = () => {
+      const elapsed = Date.now() - startTime;
+      const progress = Math.min(elapsed / duration, 1);
+      const easeOut = 1 - Math.pow(1 - progress, 3); // Cubic ease-out
+      
+      setCurrent(Math.round(start + diff * easeOut));
+      
+      if (progress < 1) {
+        requestAnimationFrame(animate);
+      } else {
+        prevTargetRef.current = target;
+      }
+    };
+    
+    animate();
+  }, [target, duration]);
+  
+  return current;
+};
+
 const EMOJI_MAP = {
   rock: "🪨",
   paper: "📜",
@@ -65,6 +97,15 @@ const RockPaperScissors = () => {
   const [playerBet, setPlayerBet] = useState<EntityType | null>(null);
   const [streak, setStreak] = useState(0);
   const [gamePhase, setGamePhase] = useState<GamePhase>("bet");
+  
+  // Betting experience enhancements
+  const [betConfetti, setBetConfetti] = useState<Array<{
+    id: number;
+    x: number;
+    y: number;
+    emoji: string;
+  }>>([]);
+  const [bettingTimeLeft, setBettingTimeLeft] = useState(15);
   
   // Configuration state
   const [rockCount, setRockCount] = useState(20);
@@ -129,6 +170,11 @@ const RockPaperScissors = () => {
     commercialBreak,
   } = usePokiSDK();
   
+  // Animated counters for smooth number transitions
+  const animatedRockCount = useAnimatedCounter(counts.rock);
+  const animatedPaperCount = useAnimatedCounter(counts.paper);
+  const animatedScissorsCount = useAnimatedCounter(counts.scissors);
+  
   // Load streak from localStorage
   useEffect(() => {
     const savedStreak = localStorage.getItem('rps_streak');
@@ -136,6 +182,16 @@ const RockPaperScissors = () => {
       setStreak(parseInt(savedStreak, 10));
     }
   }, []);
+  
+  // Betting timer countdown
+  useEffect(() => {
+    if (gamePhase === 'bet' && bettingTimeLeft > 0) {
+      const timer = setInterval(() => {
+        setBettingTimeLeft(prev => prev - 1);
+      }, 1000);
+      return () => clearInterval(timer);
+    }
+  }, [gamePhase, bettingTimeLeft]);
 
   // Touch/click interaction handler
   useEffect(() => {
@@ -315,6 +371,25 @@ const RockPaperScissors = () => {
   const handleBet = async (bet: EntityType) => {
     setPlayerBet(bet);
     
+    // 🎉 Mini confetti burst on bet selection
+    const betCard = document.querySelector(`[data-bet="${bet}"]`);
+    if (betCard) {
+      const rect = betCard.getBoundingClientRect();
+      const centerX = rect.left + rect.width / 2;
+      const centerY = rect.top + rect.height / 2;
+      
+      // Generate 8 mini confetti particles
+      const newConfetti = Array.from({ length: 8 }, (_, i) => ({
+        id: Date.now() + i,
+        x: centerX,
+        y: centerY,
+        emoji: EMOJI_MAP[bet]
+      }));
+      
+      setBetConfetti(newConfetti);
+      setTimeout(() => setBetConfetti([]), 600); // Clear after animation
+    }
+    
     // 🎮 Poki: Notify gameplay start when user makes a bet
     gameplayStart();
     console.log("🎮 Poki: gameplayStart called on bet placement");
@@ -415,6 +490,7 @@ const RockPaperScissors = () => {
     entitiesRef.current = [];
     setCounts({ rock: 0, paper: 0, scissors: 0 });
     setPrevCounts({ rock: 0, paper: 0, scissors: 0 });
+    setBettingTimeLeft(15); // Reset betting timer
     
     if (canvasRef.current) {
       const ctx = canvasRef.current.getContext("2d");
@@ -654,7 +730,19 @@ const RockPaperScissors = () => {
               />
             </div>
             
-            <Card className="w-full max-w-4xl mx-auto p-3 sm:p-6 shadow-lg">
+            <Card className="w-full max-w-4xl mx-auto p-3 sm:p-6 shadow-lg relative">
+              {/* Betting Timer Bar */}
+              <div className="betting-timer-bar" style={{ 
+                width: `${(bettingTimeLeft / 15) * 100}%` 
+              }} />
+              
+              {/* Timer Text */}
+              <div className="text-center mb-4">
+                <span className={`betting-timer-text ${bettingTimeLeft <= 5 ? 'urgent' : ''}`}>
+                  Choose your fighter: {bettingTimeLeft}s
+                </span>
+              </div>
+              
               <div className="grid grid-cols-1 sm:grid-cols-3 gap-3 sm:gap-4">
                 <button
                   data-bet="rock"
@@ -690,6 +778,22 @@ const RockPaperScissors = () => {
                 </button>
               </div>
             </Card>
+            
+            {/* Mini Confetti on Bet Click */}
+            {betConfetti.map((particle, index) => (
+              <div
+                key={particle.id}
+                className="bet-confetti-particle"
+                style={{
+                  left: `${particle.x}px`,
+                  top: `${particle.y}px`,
+                  '--angle': `${(index / 8) * 360}deg`,
+                  '--distance': '80px'
+                } as React.CSSProperties}
+              >
+                {particle.emoji}
+              </div>
+            ))}
           </div>
         )}
 
@@ -740,7 +844,7 @@ const RockPaperScissors = () => {
                   >
                     <span className="segment-content">
                       <span className="segment-emoji">🪨</span>
-                      <span className="segment-value">{counts.rock}</span>
+                      <span className="segment-value">{animatedRockCount}</span>
                     </span>
                   </span>
                   
@@ -750,7 +854,7 @@ const RockPaperScissors = () => {
                   >
                     <span className="segment-content">
                       <span className="segment-emoji">📜</span>
-                      <span className="segment-value">{counts.paper}</span>
+                      <span className="segment-value">{animatedPaperCount}</span>
                     </span>
                   </span>
                   
@@ -760,7 +864,7 @@ const RockPaperScissors = () => {
                   >
                     <span className="segment-content">
                       <span className="segment-emoji">✂️</span>
-                      <span className="segment-value">{counts.scissors}</span>
+                      <span className="segment-value">{animatedScissorsCount}</span>
                     </span>
                   </span>
                 </div>
