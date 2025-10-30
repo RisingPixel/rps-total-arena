@@ -15,6 +15,9 @@ interface Entity {
   vy: number;
   type: EntityType;
   size: number;
+  scale: number;
+  targetScale: number;
+  scaleSpeed: number;
 }
 
 const EMOJI_MAP = {
@@ -94,6 +97,14 @@ const RockPaperScissors = () => {
   const entitiesRef = useRef<Entity[]>([]);
   const animationFrameRef = useRef<number>();
   
+  // Touch particles state
+  const [touchParticles, setTouchParticles] = useState<Array<{
+    id: number;
+    x: number;
+    y: number;
+    timestamp: number;
+  }>>([]);
+  
   // Poki SDK integration
   const {
     isSDKReady,
@@ -118,6 +129,63 @@ const RockPaperScissors = () => {
       console.log("🎮 Poki: gameplayStart called on game load");
     }
   }, [isSDKReady, gameplayStart]);
+
+  // Touch/click interaction handler
+  useEffect(() => {
+    const canvas = canvasRef.current;
+    if (!canvas || gamePhase !== 'running') return;
+
+    const handleTouch = (e: MouseEvent | TouchEvent) => {
+      e.preventDefault();
+      
+      const rect = canvas.getBoundingClientRect();
+      const clientX = 'touches' in e ? e.touches[0].clientX : e.clientX;
+      const clientY = 'touches' in e ? e.touches[0].clientY : e.clientY;
+      
+      // Coordinate relative al canvas
+      const scaleX = canvas.width / rect.width;
+      const scaleY = canvas.height / rect.height;
+      const x = (clientX - rect.left) * scaleX;
+      const y = (clientY - rect.top) * scaleY;
+      
+      // Hit detection: trova entità toccata
+      const touched = entitiesRef.current.find(entity => {
+        const entityCenterX = entity.x + entity.size / 2;
+        const entityCenterY = entity.y + entity.size / 2;
+        const distance = Math.sqrt(
+          Math.pow(x - entityCenterX, 2) + 
+          Math.pow(y - entityCenterY, 2)
+        );
+        return distance < (entity.size * entity.scale) / 2;
+      });
+      
+      if (touched) {
+        // Trigger scale animation
+        touched.targetScale = 1.1;
+        
+        // Reset dopo 400ms
+        setTimeout(() => {
+          touched.targetScale = 1.0;
+        }, 400);
+        
+        // Aggiungi particella touch
+        setTouchParticles(prev => [...prev, {
+          id: Date.now() + Math.random(),
+          x: clientX - rect.left,
+          y: clientY - rect.top,
+          timestamp: Date.now()
+        }]);
+      }
+    };
+    
+    canvas.addEventListener('mousedown', handleTouch);
+    canvas.addEventListener('touchstart', handleTouch, { passive: false });
+    
+    return () => {
+      canvas.removeEventListener('mousedown', handleTouch);
+      canvas.removeEventListener('touchstart', handleTouch);
+    };
+  }, [gamePhase]);
 
   // Handle responsive arena size
   useEffect(() => {
@@ -181,6 +249,9 @@ const RockPaperScissors = () => {
         vy: (Math.random() - 0.5) * speed,
         type: "rock",
         size: entitySize,
+        scale: 1.0,
+        targetScale: 1.0,
+        scaleSpeed: 0.15,
       });
     }
     
@@ -193,6 +264,9 @@ const RockPaperScissors = () => {
         vy: (Math.random() - 0.5) * speed,
         type: "paper",
         size: entitySize,
+        scale: 1.0,
+        targetScale: 1.0,
+        scaleSpeed: 0.15,
       });
     }
     
@@ -205,6 +279,9 @@ const RockPaperScissors = () => {
         vy: (Math.random() - 0.5) * speed,
         type: "scissors",
         size: entitySize,
+        scale: 1.0,
+        targetScale: 1.0,
+        scaleSpeed: 0.15,
       });
     }
     
@@ -348,6 +425,18 @@ const RockPaperScissors = () => {
     
     const entities = entitiesRef.current;
     
+    // Update scale interpolation
+    entities.forEach((entity) => {
+      if (entity.scale !== entity.targetScale) {
+        entity.scale += (entity.targetScale - entity.scale) * entity.scaleSpeed;
+        
+        // Snap to target quando molto vicino
+        if (Math.abs(entity.scale - entity.targetScale) < 0.01) {
+          entity.scale = entity.targetScale;
+        }
+      }
+    });
+    
     // Update positions
     entities.forEach((entity) => {
       entity.x += entity.vx;
@@ -371,7 +460,12 @@ const RockPaperScissors = () => {
         const dy = entities[i].y - entities[j].y;
         const distance = Math.sqrt(dx * dx + dy * dy);
         
-        if (distance < entities[i].size) {
+        // Use scaled size for collision detection
+        const effectiveSize1 = entities[i].size * entities[i].scale;
+        const effectiveSize2 = entities[j].size * entities[j].scale;
+        const collisionThreshold = Math.max(effectiveSize1, effectiveSize2) / 2;
+        
+        if (distance < collisionThreshold) {
           const type1 = entities[i].type;
           const type2 = entities[j].type;
           
@@ -400,13 +494,16 @@ const RockPaperScissors = () => {
       }
     }
     
-    // Draw entities
-    ctx.font = "32px Arial";
-    ctx.textAlign = "center";
-    ctx.textBaseline = "middle";
-    
+    // Draw entities with scale
     entities.forEach((entity) => {
-      ctx.fillText(EMOJI_MAP[entity.type], entity.x + entity.size / 2, entity.y + entity.size / 2);
+      ctx.save();
+      ctx.translate(entity.x + entity.size / 2, entity.y + entity.size / 2);
+      ctx.scale(entity.scale, entity.scale);
+      ctx.font = "32px Arial";
+      ctx.textAlign = "center";
+      ctx.textBaseline = "middle";
+      ctx.fillText(EMOJI_MAP[entity.type], 0, 0);
+      ctx.restore();
     });
     
     // Update counts and check for winner
@@ -637,7 +734,7 @@ const RockPaperScissors = () => {
             </div>
 
             {/* Canvas */}
-            <div className="flex justify-center">
+            <div className="flex justify-center relative">
               <canvas
                 id="canvas"
                 ref={canvasRef}
@@ -645,6 +742,23 @@ const RockPaperScissors = () => {
                 height={arenaSize}
                 className="border-4 border-border rounded-lg shadow-lg bg-slate-50 max-w-full"
               />
+              
+              {/* Touch Particles */}
+              {touchParticles.map(particle => (
+                <div
+                  key={particle.id}
+                  className="touch-particle"
+                  style={{
+                    left: particle.x,
+                    top: particle.y,
+                  }}
+                  onAnimationEnd={() => {
+                    setTouchParticles(prev => 
+                      prev.filter(p => p.id !== particle.id)
+                    );
+                  }}
+                />
+              ))}
             </div>
 
             {/* Speed Control */}
