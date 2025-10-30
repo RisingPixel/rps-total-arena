@@ -333,6 +333,8 @@ const RockPaperScissors = () => {
     setShowConfetti(false);
     battleStatsRef.current = { startTime: 0, totalCollisions: 0, duration: 0 };
     
+     setCountdown(3);
+     /*
     // Show commercial break before game starts
     await commercialBreak(
       () => {
@@ -345,7 +347,7 @@ const RockPaperScissors = () => {
         setCountdown(3);
       }
     );
-  };
+  };*/
 
   const handleSpeedChange = (newSpeed: number[]) => {
     setSpeed(newSpeed[0]);
@@ -558,15 +560,15 @@ const RockPaperScissors = () => {
     
     if (typesWithEntities.length === 2 && !isSlowMotionRef.current) {
       const losingTypes = typesWithEntities.filter(
-        (type) => newCounts[type as EntityType] < 10
+        (type) => newCounts[type as EntityType] < 5
       );
       
       if (losingTypes.length > 0) {
         isSlowMotionRef.current = true;
-        // Reduce speed to 30%
+        // Reduce speed to 40%
         entitiesRef.current.forEach(entity => {
-          entity.vx *= 0.3;
-          entity.vy *= 0.3;
+          entity.vx *= 0.4;
+          entity.vy *= 0.4;
         });
       }
     }
