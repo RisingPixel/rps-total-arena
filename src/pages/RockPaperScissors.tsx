@@ -347,7 +347,8 @@ const RockPaperScissors = () => {
         setCountdown(3);
       }
     );
-  };*/
+    */
+  };
 
   const handleSpeedChange = (newSpeed: number[]) => {
     setSpeed(newSpeed[0]);
@@ -493,7 +494,10 @@ const RockPaperScissors = () => {
         // ✅ Use scaled size for collision detection (entitySize dinamico)
         const effectiveSize1 = entitySize * entities[i].scale;
         const effectiveSize2 = entitySize * entities[j].scale;
-        const collisionThreshold = Math.max(effectiveSize1, effectiveSize2) / 2;
+        // Fix: collision threshold = sum of radii (not max/2)
+        const radius1 = effectiveSize1 / 2;
+        const radius2 = effectiveSize2 / 2;
+        const collisionThreshold = radius1 + radius2;
         
         if (distance < collisionThreshold) {
           const type1 = entities[i].type;
