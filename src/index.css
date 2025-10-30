@@ -703,7 +703,7 @@ button:active::after {
   height: 40px;
   pointer-events: none;
   transform: translate(-50%, -50%);
-  animation: touch-burst 0.6s ease-out forwards;
+  animation: touch-burst 0.4s ease-out forwards;
   z-index: 10;
 }
 
@@ -733,11 +733,11 @@ button:active::after {
 }
 
 .touch-particle::before {
-  animation: sparkle-1 0.6s ease-out;
+  animation: sparkle-1 0.4s ease-out;
 }
 
 .touch-particle::after {
-  animation: sparkle-2 0.6s ease-out;
+  animation: sparkle-2 0.4s ease-out;
 }
 
 @keyframes sparkle-1 {

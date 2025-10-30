@@ -161,12 +161,12 @@ const RockPaperScissors = () => {
       
       if (touched) {
         // Trigger scale animation
-        touched.targetScale = 1.1;
+        touched.targetScale = 1.2;
         
-        // Reset dopo 400ms
+        // Reset dopo 250ms
         setTimeout(() => {
           touched.targetScale = 1.0;
-        }, 400);
+        }, 250);
         
         // Aggiungi particella touch
         setTouchParticles(prev => [...prev, {
@@ -251,7 +251,7 @@ const RockPaperScissors = () => {
         size: entitySize,
         scale: 1.0,
         targetScale: 1.0,
-        scaleSpeed: 0.15,
+        scaleSpeed: 0.25,
       });
     }
     
@@ -266,7 +266,7 @@ const RockPaperScissors = () => {
         size: entitySize,
         scale: 1.0,
         targetScale: 1.0,
-        scaleSpeed: 0.15,
+        scaleSpeed: 0.25,
       });
     }
     
@@ -281,7 +281,7 @@ const RockPaperScissors = () => {
         size: entitySize,
         scale: 1.0,
         targetScale: 1.0,
-        scaleSpeed: 0.15,
+        scaleSpeed: 0.25,
       });
     }
     
