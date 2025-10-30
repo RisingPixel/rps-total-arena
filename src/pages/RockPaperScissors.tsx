@@ -347,8 +347,7 @@ const RockPaperScissors = () => {
         setCountdown(3);
       }
     );
-    */
-  };
+  };*/
 
   const handleSpeedChange = (newSpeed: number[]) => {
     setSpeed(newSpeed[0]);
@@ -494,9 +493,7 @@ const RockPaperScissors = () => {
         // ✅ Use scaled size for collision detection (entitySize dinamico)
         const effectiveSize1 = entitySize * entities[i].scale;
         const effectiveSize2 = entitySize * entities[j].scale;
-        const radius1 = effectiveSize1 / 2;
-        const radius2 = effectiveSize2 / 2;
-        const collisionThreshold = radius1 + radius2;
+        const collisionThreshold = Math.max(effectiveSize1, effectiveSize2) / 2;
         
         if (distance < collisionThreshold) {
           const type1 = entities[i].type;
@@ -522,28 +519,6 @@ const RockPaperScissors = () => {
           if (winner !== entities[j].type) {
             entities[j].type = winner;
             battleStatsRef.current.totalCollisions++;
-          }
-          
-          // Physical separation to prevent overlap
-          if (distance > 0) {
-            const overlap = collisionThreshold - distance;
-            const separationFactor = overlap / distance * 0.5;
-            const separationX = dx * separationFactor;
-            const separationY = dy * separationFactor;
-            
-            entities[i].x += separationX;
-            entities[i].y += separationY;
-            entities[j].x -= separationX;
-            entities[j].y -= separationY;
-            
-            // Elastic bounce (partial energy conservation)
-            const bounceFactor = 0.7;
-            const tempVx = entities[i].vx;
-            const tempVy = entities[i].vy;
-            entities[i].vx = entities[j].vx * bounceFactor;
-            entities[i].vy = entities[j].vy * bounceFactor;
-            entities[j].vx = tempVx * bounceFactor;
-            entities[j].vy = tempVy * bounceFactor;
           }
         }
       }
