@@ -571,39 +571,6 @@ const RockPaperScissors = () => {
                 )}
               </div>
               
-              {/* Counter Badges (micro, inline sopra i segmenti) */}
-              <div className="counters-inline">
-                <div className="micro-badge" data-type="rock">
-                  <span className="emoji">🪨</span>
-                  <span className="value">{counts.rock}</span>
-                  {prevCounts.rock !== 0 && counts.rock !== prevCounts.rock && (
-                    <span className={`momentum-micro ${counts.rock > prevCounts.rock ? 'up' : 'down'}`}>
-                      {counts.rock > prevCounts.rock ? '↑' : '↓'}
-                    </span>
-                  )}
-                </div>
-                
-                <div className="micro-badge" data-type="paper">
-                  <span className="emoji">📜</span>
-                  <span className="value">{counts.paper}</span>
-                  {prevCounts.paper !== 0 && counts.paper !== prevCounts.paper && (
-                    <span className={`momentum-micro ${counts.paper > prevCounts.paper ? 'up' : 'down'}`}>
-                      {counts.paper > prevCounts.paper ? '↑' : '↓'}
-                    </span>
-                  )}
-                </div>
-                
-                <div className="micro-badge" data-type="scissors">
-                  <span className="emoji">✂️</span>
-                  <span className="value">{counts.scissors}</span>
-                  {prevCounts.scissors !== 0 && counts.scissors !== prevCounts.scissors && (
-                    <span className={`momentum-micro ${counts.scissors > prevCounts.scissors ? 'up' : 'down'}`}>
-                      {counts.scissors > prevCounts.scissors ? '↑' : '↓'}
-                    </span>
-                  )}
-                </div>
-              </div>
-              
               {/* Progress Bar Container (relative per bet pill absolute) */}
               <div className="arena-bar-wrapper">
                 {/* Bet Pill Floating */}
