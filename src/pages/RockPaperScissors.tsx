@@ -55,9 +55,18 @@ const RockPaperScissors = () => {
   const [speed, setSpeed] = useState(2);
   const [arenaSize, setArenaSize] = useState(() => {
     const width = window.innerWidth;
-    if (width < 640) return Math.min(width - 32, 400); // Mobile: 90% viewport with max 400px
-    if (width < 1024) return 500; // Tablet
-    return 600; // Desktop
+    const height = window.innerHeight;
+    
+    // Lascia spazio per HUD (circa 100px) e progress bar (60px) + padding = 180px totali
+    const availableHeight = height - 180;
+    const availableWidth = width - 32; // padding laterale
+    
+    // Usa il minore tra width e height disponibili
+    const maxSize = Math.min(availableHeight, availableWidth);
+    
+    if (width < 640) return Math.min(maxSize, 350); // Mobile
+    if (width < 1024) return Math.min(maxSize, 450); // Tablet
+    return Math.min(maxSize, 550); // Desktop
   });
   
   // Live counters
@@ -105,12 +114,14 @@ const RockPaperScissors = () => {
   useEffect(() => {
     const handleResize = () => {
       const width = window.innerWidth;
-      let newSize;
-      if (width < 640) newSize = Math.min(width - 32, 400);
-      else if (width < 1024) newSize = 500;
-      else newSize = 600;
+      const height = window.innerHeight;
+      const availableHeight = height - 180;
+      const availableWidth = width - 32;
+      const maxSize = Math.min(availableHeight, availableWidth);
       
-      setArenaSize(newSize);
+      if (width < 640) setArenaSize(Math.min(maxSize, 350));
+      else if (width < 1024) setArenaSize(Math.min(maxSize, 450));
+      else setArenaSize(Math.min(maxSize, 550));
     };
 
     window.addEventListener('resize', handleResize);
@@ -490,31 +501,31 @@ const RockPaperScissors = () => {
   }, [isRunning, isPaused, gamePhase]);
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-background via-background to-accent/10 p-4 md:p-8">
-      <div className="max-w-6xl mx-auto space-y-6">
+    <div className="h-screen overflow-hidden bg-gradient-to-br from-background via-background to-accent/10 flex flex-col">
+      <div className="flex-1 flex flex-col items-center justify-center p-2 sm:p-4 max-w-6xl mx-auto w-full">
 
         {/* Bet Screen */}
         {gamePhase === 'bet' && (
-          <div id="betScreen" className="space-y-6">
-            <div className="text-center mb-6">
+          <div id="betScreen" className="w-full space-y-3 sm:space-y-4">
+            <div className="text-center mb-2 sm:mb-4">
               <img 
                 src={totalArenaLogo} 
                 alt="Total Arena - Rock Paper Scissors" 
-                className="mx-auto h-24 md:h-32 w-auto drop-shadow-lg"
+                className="mx-auto h-[8vh] md:h-[12vh] w-auto drop-shadow-lg"
               />
             </div>
             
-            <Card className="p-6 md:p-8 shadow-lg">
-              <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 md:gap-6">
+            <Card className="w-full max-w-4xl mx-auto p-3 sm:p-6 shadow-lg">
+              <div className="grid grid-cols-1 sm:grid-cols-3 gap-3 sm:gap-4">
                 <button
                   data-bet="rock"
                   onClick={() => handleBet('rock')}
                   className="bet-card group"
                 >
-                  <span className="text-7xl md:text-8xl mb-4 block group-hover:scale-110 transition-transform">
+                  <span className="text-6xl sm:text-7xl md:text-8xl mb-2 sm:mb-4 block group-hover:scale-110 transition-transform">
                     🪨
                   </span>
-                  <span className="text-xl md:text-2xl font-bold font-mono">Rock</span>
+                  <span className="text-lg sm:text-xl md:text-2xl font-bold font-mono">Rock</span>
                 </button>
                 
                 <button
@@ -522,10 +533,10 @@ const RockPaperScissors = () => {
                   onClick={() => handleBet('paper')}
                   className="bet-card group"
                 >
-                  <span className="text-7xl md:text-8xl mb-4 block group-hover:scale-110 transition-transform">
+                  <span className="text-6xl sm:text-7xl md:text-8xl mb-2 sm:mb-4 block group-hover:scale-110 transition-transform">
                     📜
                   </span>
-                  <span className="text-xl md:text-2xl font-bold font-mono">Paper</span>
+                  <span className="text-lg sm:text-xl md:text-2xl font-bold font-mono">Paper</span>
                 </button>
                 
                 <button
@@ -533,10 +544,10 @@ const RockPaperScissors = () => {
                   onClick={() => handleBet('scissors')}
                   className="bet-card group"
                 >
-                  <span className="text-7xl md:text-8xl mb-4 block group-hover:scale-110 transition-transform">
+                  <span className="text-6xl sm:text-7xl md:text-8xl mb-2 sm:mb-4 block group-hover:scale-110 transition-transform">
                     ✂️
                   </span>
-                  <span className="text-xl md:text-2xl font-bold font-mono">Scissors</span>
+                  <span className="text-lg sm:text-xl md:text-2xl font-bold font-mono">Scissors</span>
                 </button>
               </div>
             </Card>
@@ -554,7 +565,7 @@ const RockPaperScissors = () => {
 
         {/* Running Phase */}
         {gamePhase === 'running' && (
-          <div className="space-y-4 mobile-gameplay-layout">
+          <div className="w-full space-y-2 sm:space-y-3">
             {/* Ultra-Compact HUD */}
             <div id="hudCompact" className="hud-compact-container">
               {/* Top Row: Title + Win Streak */}
@@ -629,8 +640,8 @@ const RockPaperScissors = () => {
             </div>
 
             {/* Speed Control */}
-            <Card className="p-4">
-              <div className="space-y-2">
+            <Card className="p-3 sm:p-4">
+              <div className="space-y-1 sm:space-y-2">
                 <label className="text-sm font-medium font-mono" id="speedSlider">
                   {STRINGS.en.speed}: {speed}x
                 </label>

@@ -143,7 +143,8 @@ button:active::after {
 
 /* Bet Screen Styles */
 .bet-card {
-  @apply flex flex-col items-center justify-center p-8 rounded-lg border-2 border-border bg-card transition-all duration-200 hover:scale-105 hover:shadow-lg cursor-pointer;
+  @apply flex flex-col items-center justify-center rounded-lg border-2 border-border bg-card transition-all duration-200 hover:scale-105 hover:shadow-lg cursor-pointer;
+  padding: clamp(1rem, 4vh, 2rem);
 }
 
 .bet-card[data-bet="rock"]:hover {
@@ -164,6 +165,10 @@ button:active::after {
 
 #hudCompact {
   @apply w-full space-y-3;
+}
+
+.hud-compact-container {
+  height: clamp(60px, 10vh, 100px);
 }
 
 /* Top Row: Title + Streak Chip */
@@ -236,7 +241,8 @@ button:active::after {
 
 /* Arena Bar (3 segmenti orizzontali) */
 #arenaBar {
-  @apply flex items-center w-full h-10 rounded-lg overflow-hidden bg-muted;
+  @apply flex items-center w-full rounded-lg overflow-hidden bg-muted;
+  height: clamp(40px, 6vh, 60px);
 }
 
 #arenaBar .bar {
@@ -301,13 +307,12 @@ button:active::after {
 
 /* Mobile Optimizations */
 @media (max-width: 640px) {
-  /* Migliora distribuzione verticale */
-  .mobile-gameplay-layout {
-    @apply space-y-4;
+  #hudCompact {
+    @apply py-1 space-y-2;
   }
   
-  #hudCompact {
-    @apply py-2 space-y-3;
+  .hud-compact-container {
+    height: clamp(50px, 8vh, 70px);
   }
   
   #canvas {
@@ -324,10 +329,6 @@ button:active::after {
   
   .micro-badge .emoji {
     @apply text-sm;
-  }
-  
-  #arenaBar {
-    @apply h-8;
   }
   
   .bet-pill-floating {
@@ -352,23 +353,23 @@ button:active::after {
   .game-title-logo {
     max-width: 240px;
   }
-  
-  #arenaBar {
-    @apply h-9;
-  }
 }
 
 /* Victory Overlay */
 .winner-overlay {
   @apply fixed inset-0 bg-background/95 backdrop-blur-sm z-50 flex items-center justify-center p-4 animate-fade-in;
+  overflow-y: auto;
 }
 
 .winner-content {
-  @apply flex flex-col items-center gap-6 text-center max-w-lg;
+  @apply flex flex-col items-center text-center max-w-lg w-full;
+  gap: clamp(0.75rem, 3vh, 1.5rem);
+  max-height: 90vh;
 }
 
 .winner-emoji-burst {
-  @apply text-[10rem] animate-emoji-explosion relative;
+  @apply animate-emoji-explosion relative;
+  font-size: clamp(3rem, 12vw, 8rem);
 }
 
 @keyframes emojiExplosion {
@@ -415,11 +416,13 @@ button:active::after {
 }
 
 .winner-title {
-  @apply text-4xl md:text-5xl font-bold font-mono;
+  @apply font-bold font-mono;
+  font-size: clamp(1.5rem, 5vw, 3rem);
 }
 
 .dominance-text {
-  @apply text-lg md:text-xl text-muted-foreground font-mono;
+  @apply text-muted-foreground font-mono;
+  font-size: clamp(0.875rem, 2.5vw, 1.25rem);
 }
 
 .streak-display {
@@ -493,23 +496,28 @@ button:active::after {
 
 /* Stats Recap */
 .stats-recap {
-  @apply grid grid-cols-3 gap-4 my-6;
+  @apply grid grid-cols-3 w-full max-w-xl;
+  gap: clamp(0.5rem, 2vw, 1rem);
+  margin: clamp(0.75rem, 3vh, 1.5rem) 0;
 }
 
 .stat-item {
-  @apply flex flex-col items-center gap-1 p-3 bg-card/50 rounded-lg border border-border;
+  @apply flex flex-col items-center gap-1 bg-card/50 rounded-lg border border-border;
+  padding: clamp(0.5rem, 2vh, 1rem);
 }
 
 .stat-icon {
-  @apply text-3xl;
+  font-size: clamp(1.5rem, 4vw, 2.5rem);
 }
 
 .stat-value {
-  @apply text-2xl font-bold font-mono text-primary;
+  @apply font-bold font-mono text-primary;
+  font-size: clamp(1rem, 3vw, 1.5rem);
 }
 
 .stat-label {
-  @apply text-xs text-muted-foreground font-mono;
+  @apply text-muted-foreground font-mono;
+  font-size: clamp(0.625rem, 1.5vw, 0.75rem);
 }
 
 .animate-stat-slide {
