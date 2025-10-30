@@ -342,21 +342,23 @@ button:active::after {
 /* Progress Bar Wrapper (relative per bet pill) */
 .arena-bar-wrapper {
   @apply relative w-full;
-  padding-top: 2rem; /* Spazio per bet pill floating */
+  padding-top: 0.75rem; /* Spazio minimo per bet pill */
+  margin-bottom: 0.5rem; /* Separa da canvas */
 }
 
 /* Bet Pill Floating */
 .bet-pill-floating {
-  @apply absolute left-1/2 -translate-x-1/2 -top-3 z-10
+  @apply absolute left-1/2 -translate-x-1/2 z-10
          px-4 py-1.5 bg-card border-2 border-border rounded-full
          text-sm font-mono font-bold text-foreground
          shadow-md backdrop-blur-sm;
+  bottom: calc(100% + 0.25rem); /* Sopra progress bar con gap minimo */
   transition: all 0.3s ease;
   cursor: help;
 }
 
 .bet-pill-floating:hover {
-  transform: translate(-50%, 0) translateY(-2px) scale(1.05);
+  transform: translate(-50%, -2px) scale(1.05);
   box-shadow: 0 4px 12px rgba(0,0,0,0.2);
 }
 
@@ -485,11 +487,12 @@ button:active::after {
   .bet-pill-floating {
     padding: 0.25rem 0.75rem;
     font-size: 0.75rem;
-    top: -0.5rem;
+    bottom: calc(100% + 0.15rem); /* Gap ridotto per landscape */
   }
 
   .arena-bar-wrapper {
-    padding-top: 1.25rem; /* Compatto per landscape */
+    padding-top: 0.5rem; /* Ultra-compatto per landscape */
+    margin-bottom: 0.25rem;
   }
   
   .game-title-logo {
@@ -531,11 +534,12 @@ button:active::after {
   
   .bet-pill-floating {
     @apply text-xs px-2 py-1;
-    top: -0.5rem;
+    bottom: calc(100% + 0.15rem); /* Gap ridotto per mobile */
   }
 
   .arena-bar-wrapper {
-    padding-top: 1.5rem; /* Ridotto su mobile */
+    padding-top: 0.5rem; /* Compatto per mobile */
+    margin-bottom: 0.25rem;
   }
   
   .segment-emoji {

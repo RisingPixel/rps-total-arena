@@ -116,17 +116,30 @@ const RockPaperScissors = () => {
     const width = window.innerWidth;
     const height = window.innerHeight;
     
-    // Spazio riservato dinamico: meno in landscape, più in portrait
-    const reservedSpace = height < 500 ? 120 : 160;
-    const availableHeight = height - reservedSpace;
-    const availableWidth = width - 32; // padding laterale
+    // 🎯 FIX: Aumenta spazio riservato per UI (logo + progress bar + bet pill + margins)
+    let reservedSpace: number;
     
-    // Usa il minore tra width e height disponibili
+    if (height < 500) {
+      // Landscape mobile: UI ultra-compatta
+      reservedSpace = 140;
+    } else if (width < 640) {
+      // Mobile portrait: più spazio per UI verticale
+      reservedSpace = 200;
+    } else if (width < 1024) {
+      // Tablet: medio spazio
+      reservedSpace = 180;
+    } else {
+      // Desktop: UI full size
+      reservedSpace = 200;
+    }
+    
+    const availableHeight = height - reservedSpace;
+    const availableWidth = width - 32;
     const maxSize = Math.min(availableHeight, availableWidth);
     
-    if (width < 640) return Math.min(maxSize, 350); // Mobile
-    if (width < 1024) return maxSize; // Tablet - rispetta sempre spazio disponibile
-    return Math.min(maxSize, 600); // Desktop
+    if (width < 640) return Math.min(maxSize, 350);
+    if (width < 1024) return maxSize;
+    return Math.min(maxSize, 600);
   });
   
   // Live counters
@@ -273,6 +286,41 @@ const RockPaperScissors = () => {
     window.addEventListener('resize', handleResize);
     return () => window.removeEventListener('resize', handleResize);
   }, []);
+
+  // Resize observer per aggiornare arenaSize in tempo reale
+  useEffect(() => {
+    const handleResize = () => {
+      const width = window.innerWidth;
+      const height = window.innerHeight;
+      
+      let reservedSpace: number;
+      if (height < 500) {
+        reservedSpace = 140;
+      } else if (width < 640) {
+        reservedSpace = 200;
+      } else if (width < 1024) {
+        reservedSpace = 180;
+      } else {
+        reservedSpace = 200;
+      }
+      
+      const availableHeight = height - reservedSpace;
+      const availableWidth = width - 32;
+      const maxSize = Math.min(availableHeight, availableWidth);
+      
+      let newSize: number;
+      if (width < 640) newSize = Math.min(maxSize, 350);
+      else if (width < 1024) newSize = maxSize;
+      else newSize = Math.min(maxSize, 600);
+      
+      if (Math.abs(newSize - arenaSize) > 10) { // Evita resize troppo frequenti
+        setArenaSize(newSize);
+      }
+    };
+    
+    window.addEventListener('resize', handleResize);
+    return () => window.removeEventListener('resize', handleResize);
+  }, [arenaSize]);
 
   // Countdown effect
   useEffect(() => {
