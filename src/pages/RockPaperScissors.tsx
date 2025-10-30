@@ -56,6 +56,7 @@ const getScaledParameters = (arenaSize: number) => {
 
 const RockPaperScissors = () => {
   const canvasRef = useRef<HTMLCanvasElement>(null);
+  const wrapperRef = useRef<HTMLDivElement>(null);
   const [isRunning, setIsRunning] = useState(false);
   const [isPaused, setIsPaused] = useState(false);
   const [winner, setWinner] = useState<EntityType | null>(null);
@@ -152,15 +153,18 @@ const RockPaperScissors = () => {
     const handleTouch = (e: MouseEvent | TouchEvent) => {
       e.preventDefault();
       
-      const rect = canvas.getBoundingClientRect();
+      const canvasRect = canvas.getBoundingClientRect();
+      const wrapperRect = wrapperRef.current?.getBoundingClientRect();
+      if (!wrapperRect) return;
+      
       const clientX = 'touches' in e ? e.touches[0].clientX : e.clientX;
       const clientY = 'touches' in e ? e.touches[0].clientY : e.clientY;
       
-      // Coordinate relative al canvas
-      const scaleX = canvas.width / rect.width;
-      const scaleY = canvas.height / rect.height;
-      const x = (clientX - rect.left) * scaleX;
-      const y = (clientY - rect.top) * scaleY;
+      // Coordinate canvas per hit detection
+      const scaleX = canvas.width / canvasRect.width;
+      const scaleY = canvas.height / canvasRect.height;
+      const xCanvas = (clientX - canvasRect.left) * scaleX;
+      const yCanvas = (clientY - canvasRect.top) * scaleY;
       
       // Hit detection: trova entità toccata (usa entitySize dinamico)
       const { entitySize } = getScaledParameters(arenaSize);
@@ -168,8 +172,8 @@ const RockPaperScissors = () => {
         const entityCenterX = entity.x + entitySize / 2;
         const entityCenterY = entity.y + entitySize / 2;
         const distance = Math.sqrt(
-          Math.pow(x - entityCenterX, 2) + 
-          Math.pow(y - entityCenterY, 2)
+          Math.pow(xCanvas - entityCenterX, 2) + 
+          Math.pow(yCanvas - entityCenterY, 2)
         );
         return distance < (entitySize * entity.scale) / 2;
       });
@@ -183,11 +187,11 @@ const RockPaperScissors = () => {
           touched.targetScale = 1.0;
         }, 250);
         
-        // Aggiungi particella touch
+        // Aggiungi particella touch (coordinate relative al wrapper)
         setTouchParticles(prev => [...prev, {
           id: Date.now() + Math.random(),
-          x: clientX - rect.left,
-          y: clientY - rect.top,
+          x: clientX - wrapperRect.left,
+          y: clientY - wrapperRect.top,
           timestamp: Date.now()
         }]);
       }
@@ -758,7 +762,7 @@ const RockPaperScissors = () => {
             </div>
 
             {/* Canvas */}
-            <div className="canvas-wrapper">
+            <div ref={wrapperRef} className="canvas-wrapper">
               <canvas
                 id="canvas"
                 ref={canvasRef}
