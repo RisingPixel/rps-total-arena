@@ -342,6 +342,7 @@ button:active::after {
 /* Progress Bar Wrapper (relative per bet pill) */
 .arena-bar-wrapper {
   @apply relative w-full;
+  padding-top: 2rem; /* Spazio per bet pill floating */
 }
 
 /* Bet Pill Floating */
@@ -486,6 +487,10 @@ button:active::after {
     font-size: 0.75rem;
     top: -0.5rem;
   }
+
+  .arena-bar-wrapper {
+    padding-top: 1.25rem; /* Compatto per landscape */
+  }
   
   .game-title-logo {
     max-height: 40px !important;
@@ -525,7 +530,12 @@ button:active::after {
   }
   
   .bet-pill-floating {
-    @apply text-xs px-2 py-1 -top-2.5;
+    @apply text-xs px-2 py-1;
+    top: -0.5rem;
+  }
+
+  .arena-bar-wrapper {
+    padding-top: 1.5rem; /* Ridotto su mobile */
   }
   
   .segment-emoji {
