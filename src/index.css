@@ -305,6 +305,35 @@ button:active::after {
   @apply hidden;
 }
 
+/* Landscape Optimization */
+@media (max-height: 500px) {
+  .hud-compact-container {
+    height: clamp(40px, 6vh, 60px) !important;
+    padding-top: 0.25rem;
+    padding-bottom: 0.25rem;
+  }
+  
+  #arenaBar {
+    height: clamp(32px, 5vh, 48px) !important;
+  }
+  
+  .bet-pill-floating {
+    padding: 0.25rem 0.75rem;
+    font-size: 0.75rem;
+    top: -0.5rem;
+  }
+  
+  .game-title-logo {
+    max-height: 40px !important;
+    max-width: 180px !important;
+  }
+  
+  #streakChip {
+    font-size: 0.625rem;
+    padding: 0.125rem 0.5rem;
+  }
+}
+
 /* Mobile Optimizations */
 @media (max-width: 640px) {
   #hudCompact {

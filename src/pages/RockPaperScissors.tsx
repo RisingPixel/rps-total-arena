@@ -57,16 +57,17 @@ const RockPaperScissors = () => {
     const width = window.innerWidth;
     const height = window.innerHeight;
     
-    // Lascia spazio per HUD (circa 100px) e progress bar (60px) + padding = 180px totali
-    const availableHeight = height - 180;
+    // Spazio riservato dinamico: meno in landscape, più in portrait
+    const reservedSpace = height < 500 ? 120 : 160;
+    const availableHeight = height - reservedSpace;
     const availableWidth = width - 32; // padding laterale
     
     // Usa il minore tra width e height disponibili
     const maxSize = Math.min(availableHeight, availableWidth);
     
     if (width < 640) return Math.min(maxSize, 350); // Mobile
-    if (width < 1024) return Math.min(maxSize, 450); // Tablet
-    return Math.min(maxSize, 550); // Desktop
+    if (width < 1024) return maxSize; // Tablet - rispetta sempre spazio disponibile
+    return Math.min(maxSize, 600); // Desktop
   });
   
   // Live counters
@@ -115,15 +116,17 @@ const RockPaperScissors = () => {
     const handleResize = () => {
       const width = window.innerWidth;
       const height = window.innerHeight;
-      const availableHeight = height - 180;
+      
+      const reservedSpace = height < 500 ? 120 : 160;
+      const availableHeight = height - reservedSpace;
       const availableWidth = width - 32;
       const maxSize = Math.min(availableHeight, availableWidth);
       
       if (width < 640) setArenaSize(Math.min(maxSize, 350));
-      else if (width < 1024) setArenaSize(Math.min(maxSize, 450));
-      else setArenaSize(Math.min(maxSize, 550));
+      else if (width < 1024) setArenaSize(maxSize); // Rispetta sempre spazio disponibile
+      else setArenaSize(Math.min(maxSize, 600));
     };
-
+    
     window.addEventListener('resize', handleResize);
     return () => window.removeEventListener('resize', handleResize);
   }, []);
