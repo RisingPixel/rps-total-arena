@@ -137,14 +137,6 @@ const RockPaperScissors = () => {
     }
   }, []);
 
-  // Call gameplayStart when SDK is ready and game loads
-  useEffect(() => {
-    if (isSDKReady) {
-      gameplayStart();
-      console.log("🎮 Poki: gameplayStart called on game load");
-    }
-  }, [isSDKReady, gameplayStart]);
-
   // Touch/click interaction handler
   useEffect(() => {
     const canvas = canvasRef.current;
@@ -244,6 +236,10 @@ const RockPaperScissors = () => {
       initializeEntities();
       battleStatsRef.current.startTime = Date.now();
       battleStatsRef.current.totalCollisions = 0;
+      
+      // 🎮 Poki: Notify gameplay actually started
+      gameplayStart();
+      console.log("🎮 Poki: gameplayStart called after countdown");
     }
   }, [countdown]);
 
@@ -318,6 +314,10 @@ const RockPaperScissors = () => {
 
   const handleBet = async (bet: EntityType) => {
     setPlayerBet(bet);
+    
+    // 🎮 Poki: Notify gameplay start when user makes a bet
+    gameplayStart();
+    console.log("🎮 Poki: gameplayStart called on bet placement");
     
     // Randomize spawn preset
     const presetIndex = Math.floor(Math.random() * SPAWN_PRESETS.length);
