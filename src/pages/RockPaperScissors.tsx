@@ -44,7 +44,7 @@ const STRINGS = {
 const getScaledParameters = (arenaSize: number) => {
   // Base: arena 600px → entity 32px (rapporto 18.75:1)
   const baseArenaSize = 600;
-  const baseEntitySize = 24;
+  const baseEntitySize = 32;
   const scaleFactor = arenaSize / baseArenaSize;
   
   return {
