@@ -44,7 +44,7 @@ const STRINGS = {
 const getScaledParameters = (arenaSize: number) => {
   // Base: arena 600px → entity 32px (rapporto 18.75:1)
   const baseArenaSize = 600;
-  const baseEntitySize = 32;
+  const baseEntitySize = 24;
   const scaleFactor = arenaSize / baseArenaSize;
   
   return {
@@ -758,7 +758,7 @@ const RockPaperScissors = () => {
             </div>
 
             {/* Canvas */}
-            <div className="flex justify-center relative">
+            <div className="canvas-wrapper">
               <canvas
                 id="canvas"
                 ref={canvasRef}

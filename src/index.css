@@ -696,6 +696,13 @@ button:active::after {
   }
 }
 
+/* Canvas Wrapper */
+.canvas-wrapper {
+  position: relative !important;
+  display: flex;
+  justify-content: center;
+}
+
 /* Touch Particles */
 .touch-particle {
   position: absolute;
