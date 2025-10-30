@@ -40,6 +40,20 @@ const STRINGS = {
   },
 };
 
+// Helper function: calcola parametri scalati in base alle dimensioni dell'arena
+const getScaledParameters = (arenaSize: number) => {
+  // Base: arena 600px → entity 32px (rapporto 18.75:1)
+  const baseArenaSize = 600;
+  const baseEntitySize = 32;
+  const scaleFactor = arenaSize / baseArenaSize;
+  
+  return {
+    entitySize: Math.round(baseEntitySize * scaleFactor),
+    speedMultiplier: scaleFactor,
+    fontSizeEmoji: Math.round(baseEntitySize * scaleFactor),
+  };
+};
+
 const RockPaperScissors = () => {
   const canvasRef = useRef<HTMLCanvasElement>(null);
   const [isRunning, setIsRunning] = useState(false);
@@ -148,15 +162,16 @@ const RockPaperScissors = () => {
       const x = (clientX - rect.left) * scaleX;
       const y = (clientY - rect.top) * scaleY;
       
-      // Hit detection: trova entità toccata
+      // Hit detection: trova entità toccata (usa entitySize dinamico)
+      const { entitySize } = getScaledParameters(arenaSize);
       const touched = entitiesRef.current.find(entity => {
-        const entityCenterX = entity.x + entity.size / 2;
-        const entityCenterY = entity.y + entity.size / 2;
+        const entityCenterX = entity.x + entitySize / 2;
+        const entityCenterY = entity.y + entitySize / 2;
         const distance = Math.sqrt(
           Math.pow(x - entityCenterX, 2) + 
           Math.pow(y - entityCenterY, 2)
         );
-        return distance < (entity.size * entity.scale) / 2;
+        return distance < (entitySize * entity.scale) / 2;
       });
       
       if (touched) {
@@ -238,15 +253,17 @@ const RockPaperScissors = () => {
 
   const initializeEntities = () => {
     const entities: Entity[] = [];
-    const entitySize = 32;
+    
+    // ✅ Calcola parametri scalati in base all'arena
+    const { entitySize, speedMultiplier } = getScaledParameters(arenaSize);
     
     // Create rocks
     for (let i = 0; i < rockCount; i++) {
       entities.push({
         x: Math.random() * (arenaSize - entitySize),
         y: Math.random() * (arenaSize - entitySize),
-        vx: (Math.random() - 0.5) * speed,
-        vy: (Math.random() - 0.5) * speed,
+        vx: (Math.random() - 0.5) * speed * speedMultiplier,
+        vy: (Math.random() - 0.5) * speed * speedMultiplier,
         type: "rock",
         size: entitySize,
         scale: 1.0,
@@ -260,8 +277,8 @@ const RockPaperScissors = () => {
       entities.push({
         x: Math.random() * (arenaSize - entitySize),
         y: Math.random() * (arenaSize - entitySize),
-        vx: (Math.random() - 0.5) * speed,
-        vy: (Math.random() - 0.5) * speed,
+        vx: (Math.random() - 0.5) * speed * speedMultiplier,
+        vy: (Math.random() - 0.5) * speed * speedMultiplier,
         type: "paper",
         size: entitySize,
         scale: 1.0,
@@ -275,8 +292,8 @@ const RockPaperScissors = () => {
       entities.push({
         x: Math.random() * (arenaSize - entitySize),
         y: Math.random() * (arenaSize - entitySize),
-        vx: (Math.random() - 0.5) * speed,
-        vy: (Math.random() - 0.5) * speed,
+        vx: (Math.random() - 0.5) * speed * speedMultiplier,
+        vy: (Math.random() - 0.5) * speed * speedMultiplier,
         type: "scissors",
         size: entitySize,
         scale: 1.0,
@@ -328,6 +345,10 @@ const RockPaperScissors = () => {
 
   const handleSpeedChange = (newSpeed: number[]) => {
     setSpeed(newSpeed[0]);
+    
+    // ✅ Applica speed multiplier basato sull'arena size
+    const { speedMultiplier } = getScaledParameters(arenaSize);
+    
     // Update velocities of existing entities
     entitiesRef.current.forEach(entity => {
       const currentSpeed = Math.sqrt(entity.vx ** 2 + entity.vy ** 2);
@@ -336,8 +357,8 @@ const RockPaperScissors = () => {
           x: entity.vx / currentSpeed, 
           y: entity.vy / currentSpeed 
         };
-        entity.vx = direction.x * newSpeed[0];
-        entity.vy = direction.y * newSpeed[0];
+        entity.vx = direction.x * newSpeed[0] * speedMultiplier;
+        entity.vy = direction.y * newSpeed[0] * speedMultiplier;
       }
     });
   };
@@ -410,6 +431,9 @@ const RockPaperScissors = () => {
     const ctx = canvas.getContext("2d");
     if (!ctx) return;
     
+    // ✅ Calcola parametri scalati per rendering
+    const { entitySize, fontSizeEmoji } = getScaledParameters(arenaSize);
+    
     // Clear canvas
     ctx.fillStyle = "#f8fafc";
     ctx.fillRect(0, 0, canvas.width, canvas.height);
@@ -442,14 +466,14 @@ const RockPaperScissors = () => {
       entity.x += entity.vx;
       entity.y += entity.vy;
       
-      // Bounce off walls
-      if (entity.x <= 0 || entity.x >= canvas.width - entity.size) {
+      // Bounce off walls (usa entitySize dinamico)
+      if (entity.x <= 0 || entity.x >= canvas.width - entitySize) {
         entity.vx *= -1;
-        entity.x = Math.max(0, Math.min(entity.x, canvas.width - entity.size));
+        entity.x = Math.max(0, Math.min(entity.x, canvas.width - entitySize));
       }
-      if (entity.y <= 0 || entity.y >= canvas.height - entity.size) {
+      if (entity.y <= 0 || entity.y >= canvas.height - entitySize) {
         entity.vy *= -1;
-        entity.y = Math.max(0, Math.min(entity.y, canvas.height - entity.size));
+        entity.y = Math.max(0, Math.min(entity.y, canvas.height - entitySize));
       }
     });
     
@@ -460,9 +484,9 @@ const RockPaperScissors = () => {
         const dy = entities[i].y - entities[j].y;
         const distance = Math.sqrt(dx * dx + dy * dy);
         
-        // Use scaled size for collision detection
-        const effectiveSize1 = entities[i].size * entities[i].scale;
-        const effectiveSize2 = entities[j].size * entities[j].scale;
+        // ✅ Use scaled size for collision detection (entitySize dinamico)
+        const effectiveSize1 = entitySize * entities[i].scale;
+        const effectiveSize2 = entitySize * entities[j].scale;
         const collisionThreshold = Math.max(effectiveSize1, effectiveSize2) / 2;
         
         if (distance < collisionThreshold) {
@@ -494,12 +518,12 @@ const RockPaperScissors = () => {
       }
     }
     
-    // Draw entities with scale
+    // Draw entities with scale (✅ usa fontSizeEmoji dinamico)
     entities.forEach((entity) => {
       ctx.save();
-      ctx.translate(entity.x + entity.size / 2, entity.y + entity.size / 2);
+      ctx.translate(entity.x + entitySize / 2, entity.y + entitySize / 2);
       ctx.scale(entity.scale, entity.scale);
-      ctx.font = "32px Arial";
+      ctx.font = `${fontSizeEmoji}px Arial`;
       ctx.textAlign = "center";
       ctx.textBaseline = "middle";
       ctx.fillText(EMOJI_MAP[entity.type], 0, 0);
