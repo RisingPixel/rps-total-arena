@@ -274,24 +274,44 @@ button:active::after {
   }
 }
 
-/* Valore dominante centrato nel segmento */
-.dominant-value {
-  @apply text-white font-mono font-bold text-lg drop-shadow-md;
+/* Segmento content: emoji + numero */
+.segment-content {
+  @apply flex items-center justify-center gap-1 whitespace-nowrap;
+}
+
+.segment-emoji {
+  @apply text-base md:text-lg;
+  font-size: clamp(14px, 2vw, 18px);
+}
+
+.segment-value {
+  @apply text-white font-mono font-bold drop-shadow-md;
+  font-size: clamp(13px, 1.8vw, 17px);
+}
+
+/* Nascondi emoji su segmenti molto stretti */
+#arenaBar .bar[style*="width: 0%"] .segment-emoji,
+#arenaBar .bar[style*="width: 1%"] .segment-emoji,
+#arenaBar .bar[style*="width: 2%"] .segment-emoji,
+#arenaBar .bar[style*="width: 3%"] .segment-emoji,
+#arenaBar .bar[style*="width: 4%"] .segment-emoji,
+#arenaBar .bar[style*="width: 5%"] .segment-emoji {
+  @apply hidden;
 }
 
 /* Mobile Optimizations */
-@media (max-width: 420px) {
+@media (max-width: 640px) {
   /* Migliora distribuzione verticale */
   .mobile-gameplay-layout {
-    @apply space-y-6;
+    @apply space-y-4;
   }
   
   #hudCompact {
-    @apply py-2 space-y-4;
+    @apply py-2 space-y-3;
   }
   
   #canvas {
-    @apply mt-2;
+    @apply mt-2 border-2;
   }
   
   #streakChip {
@@ -311,11 +331,30 @@ button:active::after {
   }
   
   .bet-pill-floating {
-    @apply text-xs px-3 py-1 -top-2.5;
+    @apply text-xs px-2 py-1 -top-2.5;
   }
   
-  .dominant-value {
-    @apply text-base;
+  .segment-emoji {
+    @apply text-sm;
+  }
+  
+  .segment-value {
+    @apply text-xs;
+  }
+  
+  .game-title-logo {
+    max-width: 200px;
+  }
+}
+
+/* Tablet Optimizations */
+@media (min-width: 641px) and (max-width: 1024px) {
+  .game-title-logo {
+    max-width: 240px;
+  }
+  
+  #arenaBar {
+    @apply h-9;
   }
 }
 

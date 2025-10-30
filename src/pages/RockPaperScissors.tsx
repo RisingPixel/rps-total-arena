@@ -53,7 +53,12 @@ const RockPaperScissors = () => {
   const [paperCount, setPaperCount] = useState(20);
   const [scissorsCount, setScissorsCount] = useState(20);
   const [speed, setSpeed] = useState(2);
-  const [arenaSize] = useState(600);
+  const [arenaSize, setArenaSize] = useState(() => {
+    const width = window.innerWidth;
+    if (width < 640) return Math.min(width - 32, 400); // Mobile: 90% viewport with max 400px
+    if (width < 1024) return 500; // Tablet
+    return 600; // Desktop
+  });
   
   // Live counters
   const [counts, setCounts] = useState({ rock: 0, paper: 0, scissors: 0 });
@@ -94,6 +99,22 @@ const RockPaperScissors = () => {
     if (savedStreak) {
       setStreak(parseInt(savedStreak, 10));
     }
+  }, []);
+
+  // Handle responsive arena size
+  useEffect(() => {
+    const handleResize = () => {
+      const width = window.innerWidth;
+      let newSize;
+      if (width < 640) newSize = Math.min(width - 32, 400);
+      else if (width < 1024) newSize = 500;
+      else newSize = 600;
+      
+      setArenaSize(newSize);
+    };
+
+    window.addEventListener('resize', handleResize);
+    return () => window.removeEventListener('resize', handleResize);
   }, []);
 
   // Countdown effect
@@ -600,27 +621,30 @@ const RockPaperScissors = () => {
                     className={`bar rock ${playerBet === 'rock' ? 'bet-active' : ''} ${counts.rock > counts.paper && counts.rock > counts.scissors ? 'leader' : ''}`}
                     style={{ width: `${(counts.rock / (counts.rock + counts.paper + counts.scissors)) * 100}%` }}
                   >
-                    {counts.rock > counts.paper && counts.rock > counts.scissors && (
-                      <span className="dominant-value">{counts.rock}</span>
-                    )}
+                    <span className="segment-content">
+                      <span className="segment-emoji">🪨</span>
+                      <span className="segment-value">{counts.rock}</span>
+                    </span>
                   </span>
                   
                   <span 
                     className={`bar paper ${playerBet === 'paper' ? 'bet-active' : ''} ${counts.paper > counts.rock && counts.paper > counts.scissors ? 'leader' : ''}`}
                     style={{ width: `${(counts.paper / (counts.rock + counts.paper + counts.scissors)) * 100}%` }}
                   >
-                    {counts.paper > counts.rock && counts.paper > counts.scissors && (
-                      <span className="dominant-value">{counts.paper}</span>
-                    )}
+                    <span className="segment-content">
+                      <span className="segment-emoji">📜</span>
+                      <span className="segment-value">{counts.paper}</span>
+                    </span>
                   </span>
                   
                   <span 
                     className={`bar scissors ${playerBet === 'scissors' ? 'bet-active' : ''} ${counts.scissors > counts.rock && counts.scissors > counts.paper ? 'leader' : ''}`}
                     style={{ width: `${(counts.scissors / (counts.rock + counts.paper + counts.scissors)) * 100}%` }}
                   >
-                    {counts.scissors > counts.rock && counts.scissors > counts.paper && (
-                      <span className="dominant-value">{counts.scissors}</span>
-                    )}
+                    <span className="segment-content">
+                      <span className="segment-emoji">✂️</span>
+                      <span className="segment-value">{counts.scissors}</span>
+                    </span>
                   </span>
                 </div>
               </div>
