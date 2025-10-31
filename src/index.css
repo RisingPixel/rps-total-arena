@@ -640,54 +640,63 @@ button:active::after {
   }
 }
 
-/* Extra aggressive optimization for very low heights (mobile landscape) */
-@media (max-height: 450px) {
+/* Landscape optimization for low heights */
+@media (max-height: 550px) {
   .winner-overlay {
     padding: 0.5rem !important;
   }
   
   .winner-content {
-    gap: 0.25rem !important;
+    gap: 0.5rem !important;
     max-height: 95vh !important;
+    overflow-y: auto !important;
+    padding: 0.5rem !important;
   }
   
   .winner-emoji-burst {
-    font-size: 2rem !important;
+    font-size: 3rem !important;
+    margin-bottom: 0 !important;
   }
   
   .winner-title {
-    font-size: 1rem !important;
-    margin: 0.25rem 0 !important;
+    font-size: 1.5rem !important;
+    margin: 0 !important;
   }
   
   .dominance-text {
-    font-size: 0.625rem !important;
-    display: none;
+    font-size: 0.75rem !important;
+    margin: 0 !important;
   }
   
+  /* Stats in 2-column grid for landscape */
   .stats-recap {
-    margin: 0.25rem 0 !important;
-    gap: 0.25rem !important;
+    display: grid !important;
+    grid-template-columns: repeat(2, 1fr) !important;
+    gap: 0.5rem !important;
+    width: 100% !important;
+    max-width: 400px !important;
+    margin: 0.5rem 0 !important;
   }
   
   .stat-item {
-    padding: 0.25rem !important;
+    padding: 0.5rem !important;
+    min-height: auto !important;
   }
   
   .stat-icon {
-    font-size: 1rem !important;
+    font-size: 1.25rem !important;
   }
   
   .stat-value {
-    font-size: 0.75rem !important;
+    font-size: 1rem !important;
   }
   
   .stat-label {
-    font-size: 0.5rem !important;
+    font-size: 0.65rem !important;
   }
   
   .streak-display {
-    padding: 0.25rem 0.75rem !important;
+    padding: 0.5rem 1rem !important;
     gap: 0.5rem !important;
   }
   
@@ -700,7 +709,7 @@ button:active::after {
   }
   
   .streak-label {
-    font-size: 0.5rem !important;
+    font-size: 0.75rem !important;
   }
   
   .victory-actions {
@@ -708,9 +717,63 @@ button:active::after {
   }
   
   .victory-actions button {
-    padding: 0.5rem 1rem !important;
+    padding: 0.5rem 1.5rem !important;
+    font-size: 0.875rem !important;
+    min-height: 36px !important;
+  }
+}
+
+/* Extra aggressive optimization for very low heights */
+@media (max-height: 450px) {
+  .winner-emoji-burst {
+    font-size: 2.5rem !important;
+  }
+  
+  .winner-title {
+    font-size: 1.25rem !important;
+  }
+  
+  .stats-recap {
+    gap: 0.25rem !important;
+  }
+  
+  .stat-item {
+    padding: 0.375rem !important;
+  }
+  
+  .stat-value {
     font-size: 0.875rem !important;
   }
+  
+  .streak-display {
+    padding: 0.375rem 0.75rem !important;
+  }
+  
+  .streak-number {
+    font-size: 1.25rem !important;
+  }
+  
+  .dominance-text {
+    display: none !important;
+  }
+}
+
+/* Scrollbar styling for Victory Screen */
+.winner-content::-webkit-scrollbar {
+  width: 8px;
+}
+
+.winner-content::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+.winner-content::-webkit-scrollbar-thumb {
+  background: rgba(139, 92, 246, 0.3);
+  border-radius: 4px;
+}
+
+.winner-content::-webkit-scrollbar-thumb:hover {
+  background: rgba(139, 92, 246, 0.5);
 }
 
 /* Victory Overlay */

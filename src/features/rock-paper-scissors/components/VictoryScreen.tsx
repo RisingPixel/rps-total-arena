@@ -32,7 +32,9 @@ export const VictoryScreen = ({
         {/* Confetti */}
         {showConfetti && (
           <div className="confetti-container">
-            {Array.from({ length: 50 }).map((_, i) => (
+            {Array.from({ 
+              length: window.innerHeight < 550 ? 30 : 50 
+            }).map((_, i) => (
               <div 
                 key={i}
                 className="confetti-piece"
