@@ -18,6 +18,11 @@ interface Entity {
   scale: number;
   targetScale: number;
   scaleSpeed: number;
+  // 🚀 Boost system
+  isBoosted: boolean;
+  boostEndTime: number;
+  boostMultiplier: number;
+  lastClickTime: number;
 }
 
 // Custom hook for animated counter numbers
@@ -98,6 +103,13 @@ const RockPaperScissors = () => {
   const [streak, setStreak] = useState(0);
   const [gamePhase, setGamePhase] = useState<GamePhase>("bet");
   
+  // 🌟 Combo system
+  const [currentCombo, setCurrentCombo] = useState(0);
+  const [maxCombo, setMaxCombo] = useState(0);
+  const [lastConversionType, setLastConversionType] = useState<EntityType | null>(null);
+  const comboTimeoutRef = useRef<NodeJS.Timeout | null>(null);
+  const COMBO_TIMEOUT = 2000;
+  
   // Betting experience enhancements
   const [betConfetti, setBetConfetti] = useState<Array<{
     id: number;
@@ -172,6 +184,8 @@ const RockPaperScissors = () => {
     x: number;
     y: number;
     timestamp: number;
+    type?: 'boost' | 'combo';
+    comboLevel?: number;
   }>>([]);
   
   // Poki SDK integration
@@ -240,20 +254,43 @@ const RockPaperScissors = () => {
       });
       
       if (touched) {
-        // Trigger scale animation
+        const now = Date.now();
+        const CLICK_COOLDOWN = 3000; // 3 secondi tra click sulla stessa entità
+        const BOOST_DURATION = 2000; // Boost dura 2 secondi
+        const BOOST_SPEED_MULT = 1.8; // +80% velocità
+        
+        // Controlla cooldown
+        if (now - touched.lastClickTime < CLICK_COOLDOWN) {
+          // Feedback visivo: shake veloce (nessun boost)
+          touched.targetScale = 0.95;
+          setTimeout(() => { touched.targetScale = 1.0; }, 100);
+          return;
+        }
+        
+        // Applica boost
+        touched.isBoosted = true;
+        touched.boostEndTime = now + BOOST_DURATION;
+        touched.boostMultiplier = BOOST_SPEED_MULT;
+        touched.lastClickTime = now;
+        
+        // Aumenta velocità
+        const currentSpeed = Math.sqrt(touched.vx ** 2 + touched.vy ** 2);
+        const newSpeed = currentSpeed * BOOST_SPEED_MULT;
+        const angle = Math.atan2(touched.vy, touched.vx);
+        touched.vx = Math.cos(angle) * newSpeed;
+        touched.vy = Math.sin(angle) * newSpeed;
+        
+        // Trigger scale animation (già presente)
         touched.targetScale = 1.2;
+        setTimeout(() => { touched.targetScale = 1.0; }, 250);
         
-        // Reset dopo 250ms
-        setTimeout(() => {
-          touched.targetScale = 1.0;
-        }, 250);
-        
-        // Aggiungi particella touch (coordinate relative al wrapper)
+        // Particelle DORATE (boost)
         setTouchParticles(prev => [...prev, {
           id: Date.now() + Math.random(),
           x: clientX - wrapperRect.left,
           y: clientY - wrapperRect.top,
-          timestamp: Date.now()
+          timestamp: Date.now(),
+          type: 'boost'
         }]);
       }
     };
@@ -373,6 +410,10 @@ const RockPaperScissors = () => {
         scale: 1.0,
         targetScale: 1.0,
         scaleSpeed: 0.25,
+        isBoosted: false,
+        boostEndTime: 0,
+        boostMultiplier: 1.0,
+        lastClickTime: 0,
       });
     }
     
@@ -388,6 +429,10 @@ const RockPaperScissors = () => {
         scale: 1.0,
         targetScale: 1.0,
         scaleSpeed: 0.25,
+        isBoosted: false,
+        boostEndTime: 0,
+        boostMultiplier: 1.0,
+        lastClickTime: 0,
       });
     }
     
@@ -403,6 +448,10 @@ const RockPaperScissors = () => {
         scale: 1.0,
         targetScale: 1.0,
         scaleSpeed: 0.25,
+        isBoosted: false,
+        boostEndTime: 0,
+        boostMultiplier: 1.0,
+        lastClickTime: 0,
       });
     }
     
@@ -536,6 +585,12 @@ const RockPaperScissors = () => {
     setShowConfetti(false);
     battleStatsRef.current = { startTime: 0, totalCollisions: 0, duration: 0 };
     entitiesRef.current = [];
+    
+    // Reset combo
+    setCurrentCombo(0);
+    setMaxCombo(0);
+    setLastConversionType(null);
+    if (comboTimeoutRef.current) clearTimeout(comboTimeoutRef.current);
     setCounts({ rock: 0, paper: 0, scissors: 0 });
     setPrevCounts({ rock: 0, paper: 0, scissors: 0 });
     setBettingTimeLeft(15); // Reset betting timer
@@ -643,10 +698,79 @@ const RockPaperScissors = () => {
           if (winner !== entities[i].type) {
             entities[i].type = winner;
             battleStatsRef.current.totalCollisions++;
+            
+            // 🌟 COMBO LOGIC
+            if (lastConversionType === winner) {
+              // Stessa entità continua a convertire → Incrementa combo
+              setCurrentCombo(prev => {
+                const newCombo = prev + 1;
+                setMaxCombo(max => Math.max(max, newCombo));
+                return newCombo;
+              });
+            } else {
+              // Tipo diverso → Reset combo
+              setCurrentCombo(1);
+              setLastConversionType(winner);
+            }
+            
+            // Reset timeout: se nessuna conversione per 2s, azzera combo
+            if (comboTimeoutRef.current) clearTimeout(comboTimeoutRef.current);
+            comboTimeoutRef.current = setTimeout(() => {
+              setCurrentCombo(0);
+              setLastConversionType(null);
+            }, COMBO_TIMEOUT);
+            
+            // Particelle combo se combo >= 3
+            if (currentCombo >= 3) {
+              const particleCount = Math.min(currentCombo, 10);
+              for (let k = 0; k < particleCount; k++) {
+                setTouchParticles(prev => [...prev, {
+                  id: Date.now() + Math.random() + k,
+                  x: (entities[i].x + entitySize / 2) * (canvas.width / arenaSize),
+                  y: (entities[i].y + entitySize / 2) * (canvas.height / arenaSize),
+                  timestamp: Date.now(),
+                  type: 'combo',
+                  comboLevel: currentCombo
+                }]);
+              }
+            }
           }
           if (winner !== entities[j].type) {
             entities[j].type = winner;
             battleStatsRef.current.totalCollisions++;
+            
+            // 🌟 COMBO LOGIC (stesso codice per entities[j])
+            if (lastConversionType === winner) {
+              setCurrentCombo(prev => {
+                const newCombo = prev + 1;
+                setMaxCombo(max => Math.max(max, newCombo));
+                return newCombo;
+              });
+            } else {
+              setCurrentCombo(1);
+              setLastConversionType(winner);
+            }
+            
+            if (comboTimeoutRef.current) clearTimeout(comboTimeoutRef.current);
+            comboTimeoutRef.current = setTimeout(() => {
+              setCurrentCombo(0);
+              setLastConversionType(null);
+            }, COMBO_TIMEOUT);
+            
+            // Particelle combo
+            if (currentCombo >= 3) {
+              const particleCount = Math.min(currentCombo, 10);
+              for (let k = 0; k < particleCount; k++) {
+                setTouchParticles(prev => [...prev, {
+                  id: Date.now() + Math.random() + k + 100,
+                  x: (entities[j].x + entitySize / 2) * (canvas.width / arenaSize),
+                  y: (entities[j].y + entitySize / 2) * (canvas.height / arenaSize),
+                  timestamp: Date.now(),
+                  type: 'combo',
+                  comboLevel: currentCombo
+                }]);
+              }
+            }
           }
         }
       }
@@ -656,12 +780,36 @@ const RockPaperScissors = () => {
     entities.forEach((entity) => {
       ctx.save();
       ctx.translate(entity.x + entitySize / 2, entity.y + entitySize / 2);
+      
+      // 🚀 Trail dorato se boostato
+      if (entity.isBoosted && Date.now() < entity.boostEndTime) {
+        ctx.globalAlpha = 0.4;
+        ctx.strokeStyle = '#FFD700'; // Oro
+        ctx.lineWidth = 3;
+        ctx.beginPath();
+        ctx.arc(0, 0, entitySize * 0.6, 0, Math.PI * 2);
+        ctx.stroke();
+        ctx.globalAlpha = 1.0;
+      }
+      
       ctx.scale(entity.scale, entity.scale);
       ctx.font = `${fontSizeEmoji}px Arial`;
       ctx.textAlign = "center";
       ctx.textBaseline = "middle";
       ctx.fillText(EMOJI_MAP[entity.type], 0, 0);
       ctx.restore();
+      
+      // Reset boost se scaduto
+      if (entity.isBoosted && Date.now() >= entity.boostEndTime) {
+        entity.isBoosted = false;
+        entity.boostMultiplier = 1.0;
+        // Ritorna a velocità normale
+        const currentSpeed = Math.sqrt(entity.vx ** 2 + entity.vy ** 2);
+        const normalSpeed = currentSpeed / 1.8; // Inverti il boost
+        const angle = Math.atan2(entity.vy, entity.vx);
+        entity.vx = Math.cos(angle) * normalSpeed;
+        entity.vy = Math.sin(angle) * normalSpeed;
+      }
     });
     
     // Update counts and check for winner
@@ -737,6 +885,16 @@ const RockPaperScissors = () => {
       setPrevLeader(currentLeader);
     }
   }, [counts, prevLeader]);
+
+  // Screen shake su mega combo (≥10)
+  useEffect(() => {
+    if (currentCombo >= 10 && wrapperRef.current) {
+      wrapperRef.current.classList.add('mega-combo');
+      setTimeout(() => {
+        wrapperRef.current?.classList.remove('mega-combo');
+      }, 300);
+    }
+  }, [currentCombo]);
 
   useEffect(() => {
     const handleKeyPress = (e: KeyboardEvent) => {
@@ -919,8 +1077,30 @@ const RockPaperScissors = () => {
               </div>
             </div>
 
+            {/* Combo Badge - floating sopra arena */}
+            {currentCombo >= 3 && gamePhase === 'running' && (
+              <div className="absolute top-4 left-1/2 -translate-x-1/2 z-20 animate-bounce">
+                <div 
+                  className="px-6 py-3 rounded-full font-bold text-2xl shadow-2xl transition-all duration-300"
+                  style={{
+                    background: currentCombo >= 10 
+                      ? 'linear-gradient(135deg, #FF6B6B 0%, #FFD93D 50%, #6BCB77 100%)'
+                      : currentCombo >= 7
+                      ? 'linear-gradient(135deg, #FFD93D 0%, #FF6B6B 100%)'
+                      : 'linear-gradient(135deg, #6BCB77 0%, #4D96FF 100%)',
+                    transform: `scale(${1 + currentCombo * 0.05})`,
+                    animation: currentCombo >= 10 ? 'pulse 0.5s infinite' : 'none'
+                  }}
+                >
+                  <span className="text-white drop-shadow-lg">
+                    x{currentCombo} COMBO! 🔥
+                  </span>
+                </div>
+              </div>
+            )}
+
             {/* Canvas */}
-            <div ref={wrapperRef} className="canvas-wrapper">
+            <div ref={wrapperRef} className="canvas-wrapper relative">
               <canvas
                 id="canvas"
                 ref={canvasRef}
@@ -933,7 +1113,7 @@ const RockPaperScissors = () => {
               {touchParticles.map(particle => (
                 <div
                   key={particle.id}
-                  className="touch-particle"
+                  className={`touch-particle ${particle.type || ''}`}
                   style={{
                     left: particle.x,
                     top: particle.y,
@@ -1031,6 +1211,14 @@ const RockPaperScissors = () => {
                   <span className="stat-value">{EMOJI_MAP[winner]}</span>
                   <span className="stat-label">Champion</span>
                 </div>
+                
+                {maxCombo >= 3 && (
+                  <div className="stat-item animate-stat-slide" style={{ animationDelay: '0.8s' }}>
+                    <span className="stat-icon">🔥</span>
+                    <span className="stat-value">x{maxCombo}</span>
+                    <span className="stat-label">Max Combo</span>
+                  </div>
+                )}
               </div>
               
               {winner === playerBet && streak > 0 && (
