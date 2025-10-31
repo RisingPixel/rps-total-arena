@@ -3,11 +3,13 @@ import { usePokiSDK } from "@/hooks/usePokiSDK";
 import { useGameState } from "./hooks/useGameState";
 import { useGameLoop } from "./hooks/useGameLoop";
 import { useGameControls } from "./hooks/useGameControls";
+import { useBackgroundMusic } from "./hooks/useBackgroundMusic";
 import { BetScreen } from "./components/BetScreen";
 import { CountdownOverlay } from "./components/CountdownOverlay";
 import { GameHUD } from "./components/GameHUD";
 import { GameCanvas } from "./components/GameCanvas";
 import { VictoryScreen } from "./components/VictoryScreen";
+import { AudioToggle } from "./components/AudioToggle";
 import { Entity, EntityType } from "./types";
 import { EMOJI_MAP, GAME_CONFIG, SPAWN_PRESETS } from "./constants";
 import { resetCombo } from "./utils/combo";
@@ -45,6 +47,12 @@ const RockPaperScissors = () => {
     entitiesRef,
     gameState,
     scaledParams,
+  });
+  
+  useBackgroundMusic({
+    isMuted: gameState.isMuted,
+    isAdPlaying: pokiSDK.isAdPlaying,
+    gamePhase: gameState.gamePhase,
   });
   
   // Handle responsive arena size
@@ -284,6 +292,12 @@ const RockPaperScissors = () => {
     gameState.updateStreak(winningType === gameState.playerBet);
   };
   
+  const handleToggleMute = () => {
+    const newMutedState = !gameState.isMuted;
+    gameState.setIsMuted(newMutedState);
+    localStorage.setItem('rps_audio_muted', newMutedState.toString());
+  };
+  
   const handlePlayAgain = () => {
     gameState.setGamePhase('bet');
     gameState.setIsRunning(false);
@@ -371,6 +385,12 @@ const RockPaperScissors = () => {
           />
         )}
       </div>
+      
+      {/* Audio Toggle - Always visible */}
+      <AudioToggle 
+        isMuted={gameState.isMuted}
+        onToggle={handleToggleMute}
+      />
       
       {/* Ad Playing Overlay */}
       {pokiSDK.isAdPlaying && (

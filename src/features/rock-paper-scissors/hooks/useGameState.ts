@@ -59,7 +59,10 @@ export const useGameState = () => {
   const [countdown, setCountdown] = useState<number | null>(null);
   const [showConfetti, setShowConfetti] = useState(false);
   const [touchParticles, setTouchParticles] = useState<TouchParticle[]>([]);
-  const [isMuted, setIsMuted] = useState(false);
+  const [isMuted, setIsMuted] = useState(() => {
+    const saved = localStorage.getItem('rps_audio_muted');
+    return saved === 'true';
+  });
   
   // Stats
   const battleStatsRef = useRef<BattleStats>({
