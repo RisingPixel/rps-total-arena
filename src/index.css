@@ -484,15 +484,27 @@ button:active::after {
     height: clamp(32px, 5vh, 48px) !important;
   }
   
-  .bet-pill-floating {
-    padding: 0.25rem 0.75rem;
-    font-size: 0.75rem;
-    bottom: calc(100% + 0.15rem); /* Gap ridotto per landscape */
+  .arena-bar-wrapper {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 0.25rem;
+    padding-top: 0;
+    margin-bottom: 0.5rem;
   }
 
-  .arena-bar-wrapper {
-    padding-top: 0.5rem; /* Ultra-compatto per landscape */
+  .bet-pill-floating {
+    position: static;
+    left: auto;
+    bottom: auto;
+    transform: none;
+    z-index: auto;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
     margin-bottom: 0.25rem;
+    padding: 0.25rem 0.75rem;
+    font-size: 0.75rem;
   }
   
   .game-title-logo {
@@ -532,14 +544,27 @@ button:active::after {
     @apply text-sm;
   }
   
-  .bet-pill-floating {
-    @apply text-xs px-2 py-1;
-    bottom: calc(100% + 0.15rem); /* Gap ridotto per mobile */
+  .arena-bar-wrapper {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 0.25rem;
+    padding-top: 0;
+    margin-bottom: 0.5rem;
   }
 
-  .arena-bar-wrapper {
-    padding-top: 0.5rem; /* Compatto per mobile */
+  .bet-pill-floating {
+    position: static;
+    left: auto;
+    bottom: auto;
+    transform: none;
+    z-index: auto;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
     margin-bottom: 0.25rem;
+    font-size: 0.75rem;
+    padding: 0.25rem 0.5rem;
   }
   
   .segment-emoji {
