@@ -1,5 +1,3 @@
-import { Card } from "@/components/ui/card";
-import { Slider } from "@/components/ui/slider";
 import totalArenaLogo from "@/assets/total-arena-logo.png";
 import { EntityType } from "../types";
 import { EMOJI_MAP } from "../constants";
@@ -7,15 +5,13 @@ import { useAnimatedCounter } from "../hooks/useAnimatedCounter";
 
 interface GameHUDProps {
   counts: { rock: number; paper: number; scissors: number };
-  speed: number;
-  onSpeedChange: (value: number[]) => void;
   streak: number;
   currentCombo: number;
   playerBet: EntityType | null;
   gamePhase: string;
 }
 
-export const GameHUD = ({ counts, speed, onSpeedChange, streak, currentCombo, playerBet, gamePhase }: GameHUDProps) => {
+export const GameHUD = ({ counts, streak, currentCombo, playerBet, gamePhase }: GameHUDProps) => {
   const animatedRockCount = useAnimatedCounter(counts.rock);
   const animatedPaperCount = useAnimatedCounter(counts.paper);
   const animatedScissorsCount = useAnimatedCounter(counts.scissors);
@@ -105,23 +101,6 @@ export const GameHUD = ({ counts, speed, onSpeedChange, streak, currentCombo, pl
           </div>
         </div>
       )}
-      
-      {/* Speed Control - Moved to bottom */}
-      <Card className="p-3 sm:p-4 mt-2">
-        <div className="space-y-1 sm:space-y-2">
-          <label className="text-sm font-medium font-mono" id="speedSlider">
-            Speed: {speed}x
-          </label>
-          <Slider
-            value={[speed]}
-            onValueChange={onSpeedChange}
-            min={0.5}
-            max={5}
-            step={0.5}
-            aria-labelledby="speedSlider"
-          />
-        </div>
-      </Card>
     </div>
   );
 };

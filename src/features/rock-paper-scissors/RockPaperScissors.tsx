@@ -10,6 +10,8 @@ import { GameHUD } from "./components/GameHUD";
 import { GameCanvas } from "./components/GameCanvas";
 import { VictoryScreen } from "./components/VictoryScreen";
 import { AudioToggle } from "./components/AudioToggle";
+import { Card } from "@/components/ui/card";
+import { Slider } from "@/components/ui/slider";
 import { Entity, EntityType } from "./types";
 import { EMOJI_MAP, GAME_CONFIG, SPAWN_PRESETS } from "./constants";
 import { resetCombo } from "./utils/combo";
@@ -352,8 +354,6 @@ const RockPaperScissors = () => {
           <div className="w-full space-y-2 sm:space-y-3">
             <GameHUD
               counts={gameState.counts}
-              speed={gameState.speed}
-              onSpeedChange={handleSpeedChange}
               streak={gameState.streak}
               currentCombo={gameState.currentCombo}
               playerBet={gameState.playerBet}
@@ -369,6 +369,23 @@ const RockPaperScissors = () => {
               }}
               wrapperRef={wrapperRef}
             />
+            
+            {/* Speed Control - Positioned below canvas */}
+            <Card className="p-3 sm:p-4">
+              <div className="space-y-1 sm:space-y-2">
+                <label className="text-sm font-medium font-mono" id="speedSlider">
+                  Speed: {gameState.speed}x
+                </label>
+                <Slider
+                  value={[gameState.speed]}
+                  onValueChange={handleSpeedChange}
+                  min={0.5}
+                  max={5}
+                  step={0.5}
+                  aria-labelledby="speedSlider"
+                />
+              </div>
+            </Card>
           </div>
         )}
         
