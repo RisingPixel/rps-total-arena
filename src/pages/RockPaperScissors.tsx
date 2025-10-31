@@ -1,4 +1,4 @@
-import { useEffect, useRef, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import { Button } from "@/components/ui/button";
 import { Slider } from "@/components/ui/slider";
 import { Card } from "@/components/ui/card";
@@ -65,30 +65,57 @@ const EMOJI_MAP = {
 
 const SPAWN_PRESETS = [15, 20, 25];
 
-const STRINGS = {
-  en: {
-    winStreak: "win streak",
-    victoryYou: "Victory! 🎉",
-    victoryOther: "Defeat 😔",
-    dominanceAchieved: "Total domination achieved",
-    playAgain: "Play Again",
-    continue: "Continue",
-    speed: "Speed",
-  },
+// Helper: Apply boost to entity (pure function)
+const applyBoostToEntity = (entity: Entity, now: number): boolean => {
+  const CLICK_COOLDOWN = 3000;
+  const BOOST_DURATION = 2000;
+  const BOOST_SPEED_MULT = 1.8;
+  
+  if (now - entity.lastClickTime < CLICK_COOLDOWN) {
+    return false; // Cooldown active
+  }
+  
+  entity.isBoosted = true;
+  entity.boostEndTime = now + BOOST_DURATION;
+  entity.boostMultiplier = BOOST_SPEED_MULT;
+  entity.lastClickTime = now;
+  
+  const currentSpeed = Math.sqrt(entity.vx ** 2 + entity.vy ** 2);
+  const newSpeed = currentSpeed * BOOST_SPEED_MULT;
+  const angle = Math.atan2(entity.vy, entity.vx);
+  entity.vx = Math.cos(angle) * newSpeed;
+  entity.vy = Math.sin(angle) * newSpeed;
+  
+  return true;
 };
 
-// Helper function: calcola parametri scalati in base alle dimensioni dell'arena
-const getScaledParameters = (arenaSize: number) => {
-  // Base: arena 600px → entity 32px (rapporto 18.75:1)
-  const baseArenaSize = 600;
-  const baseEntitySize = 32;
-  const scaleFactor = arenaSize / baseArenaSize;
+// Helper: Render entity on canvas (extracted rendering logic)
+const renderEntity = (
+  ctx: CanvasRenderingContext2D,
+  entity: Entity,
+  entitySize: number,
+  fontSizeEmoji: number
+) => {
+  ctx.save();
+  ctx.translate(entity.x + entitySize / 2, entity.y + entitySize / 2);
   
-  return {
-    entitySize: Math.round(baseEntitySize * scaleFactor),
-    speedMultiplier: scaleFactor,
-    fontSizeEmoji: Math.round(baseEntitySize * scaleFactor),
-  };
+  // Boost trail
+  if (entity.isBoosted && Date.now() < entity.boostEndTime) {
+    ctx.globalAlpha = 0.4;
+    ctx.strokeStyle = '#FFD700';
+    ctx.lineWidth = 3;
+    ctx.beginPath();
+    ctx.arc(0, 0, entitySize * 0.6, 0, Math.PI * 2);
+    ctx.stroke();
+    ctx.globalAlpha = 1.0;
+  }
+  
+  ctx.scale(entity.scale, entity.scale);
+  ctx.font = `${fontSizeEmoji}px Arial`;
+  ctx.textAlign = "center";
+  ctx.textBaseline = "middle";
+  ctx.fillText(EMOJI_MAP[entity.type], 0, 0);
+  ctx.restore();
 };
 
 const RockPaperScissors = () => {
@@ -202,6 +229,19 @@ const RockPaperScissors = () => {
   const animatedPaperCount = useAnimatedCounter(counts.paper);
   const animatedScissorsCount = useAnimatedCounter(counts.scissors);
   
+  // Memoized scaled parameters (recalculates only when arenaSize changes)
+  const scaledParams = useMemo(() => {
+    const baseArenaSize = 600;
+    const baseEntitySize = 32;
+    const scaleFactor = arenaSize / baseArenaSize;
+    
+    return {
+      entitySize: Math.round(baseEntitySize * scaleFactor),
+      speedMultiplier: scaleFactor,
+      fontSizeEmoji: Math.round(baseEntitySize * scaleFactor),
+    };
+  }, [arenaSize]);
+  
   // Load streak from localStorage
   useEffect(() => {
     const savedStreak = localStorage.getItem('rps_streak');
@@ -242,7 +282,7 @@ const RockPaperScissors = () => {
       const yCanvas = (clientY - canvasRect.top) * scaleY;
       
       // Hit detection: trova entità toccata (usa entitySize dinamico)
-      const { entitySize } = getScaledParameters(arenaSize);
+      const { entitySize } = scaledParams;
       const touched = entitiesRef.current.find(entity => {
         const entityCenterX = entity.x + entitySize / 2;
         const entityCenterY = entity.y + entitySize / 2;
@@ -255,32 +295,16 @@ const RockPaperScissors = () => {
       
       if (touched) {
         const now = Date.now();
-        const CLICK_COOLDOWN = 3000; // 3 secondi tra click sulla stessa entità
-        const BOOST_DURATION = 2000; // Boost dura 2 secondi
-        const BOOST_SPEED_MULT = 1.8; // +80% velocità
+        const boosted = applyBoostToEntity(touched, now);
         
-        // Controlla cooldown
-        if (now - touched.lastClickTime < CLICK_COOLDOWN) {
-          // Feedback visivo: shake veloce (nessun boost)
+        if (!boosted) {
+          // Feedback visivo: shake veloce (cooldown attivo)
           touched.targetScale = 0.95;
           setTimeout(() => { touched.targetScale = 1.0; }, 100);
           return;
         }
         
-        // Applica boost
-        touched.isBoosted = true;
-        touched.boostEndTime = now + BOOST_DURATION;
-        touched.boostMultiplier = BOOST_SPEED_MULT;
-        touched.lastClickTime = now;
-        
-        // Aumenta velocità
-        const currentSpeed = Math.sqrt(touched.vx ** 2 + touched.vy ** 2);
-        const newSpeed = currentSpeed * BOOST_SPEED_MULT;
-        const angle = Math.atan2(touched.vy, touched.vx);
-        touched.vx = Math.cos(angle) * newSpeed;
-        touched.vy = Math.sin(angle) * newSpeed;
-        
-        // Trigger scale animation (già presente)
+        // Boost applicato con successo - trigger animazioni
         touched.targetScale = 1.2;
         setTimeout(() => { touched.targetScale = 1.0; }, 250);
         
@@ -302,29 +326,9 @@ const RockPaperScissors = () => {
       canvas.removeEventListener('mousedown', handleTouch);
       canvas.removeEventListener('touchstart', handleTouch);
     };
-  }, [gamePhase]);
+  }, [gamePhase, arenaSize, scaledParams]);
 
-  // Handle responsive arena size
-  useEffect(() => {
-    const handleResize = () => {
-      const width = window.innerWidth;
-      const height = window.innerHeight;
-      
-      const reservedSpace = height < 500 ? 120 : 160;
-      const availableHeight = height - reservedSpace;
-      const availableWidth = width - 32;
-      const maxSize = Math.min(availableHeight, availableWidth);
-      
-      if (width < 640) setArenaSize(Math.min(maxSize, 350));
-      else if (width < 1024) setArenaSize(maxSize); // Rispetta sempre spazio disponibile
-      else setArenaSize(Math.min(maxSize, 600));
-    };
-    
-    window.addEventListener('resize', handleResize);
-    return () => window.removeEventListener('resize', handleResize);
-  }, []);
-
-  // Resize observer per aggiornare arenaSize in tempo reale
+  // Handle responsive arena size (merged resize handlers)
   useEffect(() => {
     const handleResize = () => {
       const width = window.innerWidth;
@@ -395,8 +399,8 @@ const RockPaperScissors = () => {
   const initializeEntities = () => {
     const entities: Entity[] = [];
     
-    // ✅ Calcola parametri scalati in base all'arena
-    const { entitySize, speedMultiplier } = getScaledParameters(arenaSize);
+    // ✅ Usa parametri scalati memoizzati
+    const { entitySize, speedMultiplier } = scaledParams;
     
     // Create rocks
     for (let i = 0; i < rockCount; i++) {
@@ -525,8 +529,8 @@ const RockPaperScissors = () => {
   const handleSpeedChange = (newSpeed: number[]) => {
     setSpeed(newSpeed[0]);
     
-    // ✅ Applica speed multiplier basato sull'arena size
-    const { speedMultiplier } = getScaledParameters(arenaSize);
+    // ✅ Usa speed multiplier memoizzato
+    const { speedMultiplier } = scaledParams;
     
     // Update velocities of existing entities
     entitiesRef.current.forEach(entity => {
@@ -617,8 +621,8 @@ const RockPaperScissors = () => {
     const ctx = canvas.getContext("2d");
     if (!ctx) return;
     
-    // ✅ Calcola parametri scalati per rendering
-    const { entitySize, fontSizeEmoji } = getScaledParameters(arenaSize);
+    // ✅ Usa parametri scalati memoizzati
+    const { entitySize, fontSizeEmoji } = scaledParams;
     
     // Clear canvas
     ctx.fillStyle = "#f8fafc";
@@ -776,30 +780,11 @@ const RockPaperScissors = () => {
       }
     }
     
-    // Draw entities with scale (✅ usa fontSizeEmoji dinamico)
+    // Draw entities with scale (extracted rendering logic)
     entities.forEach((entity) => {
-      ctx.save();
-      ctx.translate(entity.x + entitySize / 2, entity.y + entitySize / 2);
+      renderEntity(ctx, entity, entitySize, fontSizeEmoji);
       
-      // 🚀 Trail dorato se boostato
-      if (entity.isBoosted && Date.now() < entity.boostEndTime) {
-        ctx.globalAlpha = 0.4;
-        ctx.strokeStyle = '#FFD700'; // Oro
-        ctx.lineWidth = 3;
-        ctx.beginPath();
-        ctx.arc(0, 0, entitySize * 0.6, 0, Math.PI * 2);
-        ctx.stroke();
-        ctx.globalAlpha = 1.0;
-      }
-      
-      ctx.scale(entity.scale, entity.scale);
-      ctx.font = `${fontSizeEmoji}px Arial`;
-      ctx.textAlign = "center";
-      ctx.textBaseline = "middle";
-      ctx.fillText(EMOJI_MAP[entity.type], 0, 0);
-      ctx.restore();
-      
-      // Reset boost se scaduto
+      // Reset boost se scaduto (game logic stays here)
       if (entity.isBoosted && Date.now() >= entity.boostEndTime) {
         entity.isBoosted = false;
         entity.boostMultiplier = 1.0;
@@ -1131,7 +1116,7 @@ const RockPaperScissors = () => {
             <Card className="p-3 sm:p-4">
               <div className="space-y-1 sm:space-y-2">
                 <label className="text-sm font-medium font-mono" id="speedSlider">
-                  {STRINGS.en.speed}: {speed}x
+                  Speed: {speed}x
                 </label>
                 <Slider
                   value={[speed]}
@@ -1184,12 +1169,12 @@ const RockPaperScissors = () => {
               
               <h2 id="winnerTitle" className="winner-title">
                 {winner === playerBet 
-                  ? STRINGS.en.victoryYou 
-                  : STRINGS.en.victoryOther}
+                  ? "Victory! 🎉" 
+                  : "Defeat 😔"}
               </h2>
               
               <p className="dominance-text">
-                {STRINGS.en.dominanceAchieved}
+                Total domination achieved
               </p>
               
               {/* Stats Recap */}
@@ -1230,7 +1215,7 @@ const RockPaperScissors = () => {
                   <span className="streak-emoji">🔥</span>
                   <span className="streak-number">{streak}</span>
                   <span className="streak-label">
-                    {STRINGS.en.winStreak}
+                    win streak
                   </span>
                 </div>
               )}
@@ -1242,7 +1227,7 @@ const RockPaperScissors = () => {
                   size="lg"
                   className="font-mono"
                 >
-                  {STRINGS.en.playAgain}
+                  Play Again
                 </Button>
               
               </div>
