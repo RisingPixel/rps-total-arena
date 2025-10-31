@@ -56,11 +56,19 @@ export const useBackgroundMusic = ({
   
   // Handle mute/unmute
   useEffect(() => {
-    if (!audioRef.current) return;
+    if (!audioRef.current || !audioContextRef.current) return;
     
     if (isMuted || isAdPlaying) {
       audioRef.current.pause();
+      // ✅ Suspend AudioContext to stop all audio processing
+      if (audioContextRef.current.state === 'running') {
+        audioContextRef.current.suspend();
+      }
     } else {
+      // ✅ Resume AudioContext before playing
+      if (audioContextRef.current.state === 'suspended') {
+        audioContextRef.current.resume();
+      }
       audioRef.current.play().catch(err => {
         console.warn('Audio autoplay blocked:', err);
       });
@@ -78,7 +86,10 @@ export const useBackgroundMusic = ({
 
   // Apply dynamic low-pass filter based on game phase
   useEffect(() => {
-    if (!filterRef.current || !audioContextRef.current) return;
+    if (!filterRef.current || !audioContextRef.current || !audioRef.current) return;
+    
+    // ✅ Don't apply filter if audio is paused/muted
+    if (audioRef.current.paused) return;
 
     const filter = filterRef.current;
     const audioContext = audioContextRef.current;
@@ -88,8 +99,8 @@ export const useBackgroundMusic = ({
       audioContext.resume();
     }
 
-    // Smooth transition (3 seconds)
-    const transitionTime = 3.0;
+    // Smooth transition (1 second for snappier feel)
+    const transitionTime = 1.0;
 
     if (gamePhase === 'bet' || gamePhase === 'victory') {
       // Filtered: Low frequency cutoff → "muffled/distant" sound
