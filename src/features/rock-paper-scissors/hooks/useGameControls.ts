@@ -1,5 +1,5 @@
-import { useEffect } from "react";
-import { Entity } from "../types";
+import { useEffect, useCallback, useRef } from "react";
+import { Entity, GameState } from "../types";
 import { applyBoostToEntity } from "../utils/physics";
 import { GAME_CONFIG } from "../constants";
 
@@ -7,7 +7,7 @@ interface UseGameControlsParams {
   canvasRef: React.RefObject<HTMLCanvasElement>;
   wrapperRef: React.RefObject<HTMLDivElement>;
   entitiesRef: React.MutableRefObject<Entity[]>;
-  gameState: any;
+  gameState: GameState;
   scaledParams: { entitySize: number };
 }
 
@@ -18,8 +18,9 @@ export const useGameControls = ({
   gameState, 
   scaledParams 
 }: UseGameControlsParams) => {
+  const timeoutsRef = useRef<NodeJS.Timeout[]>([]);
   
-  const handleInteraction = (clientX: number, clientY: number) => {
+  const handleInteraction = useCallback((clientX: number, clientY: number) => {
     const canvas = canvasRef.current;
     const wrapperRect = wrapperRef.current?.getBoundingClientRect();
     if (!canvas || !wrapperRect || gameState.gamePhase !== 'running') return;
@@ -55,13 +56,15 @@ export const useGameControls = ({
       if (!boosted) {
         // Cooldown active - shake feedback
         touched.targetScale = GAME_CONFIG.SCALE_COOLDOWN;
-        setTimeout(() => { touched.targetScale = 1.0; }, GAME_CONFIG.SCALE_ANIMATION_COOLDOWN);
+        const timeout = setTimeout(() => { touched.targetScale = 1.0; }, GAME_CONFIG.SCALE_ANIMATION_COOLDOWN);
+        timeoutsRef.current.push(timeout);
         return;
       }
       
       // Boost applied - scale animation
       touched.targetScale = GAME_CONFIG.SCALE_BOOST;
-      setTimeout(() => { touched.targetScale = 1.0; }, GAME_CONFIG.SCALE_ANIMATION_DURATION);
+      const timeout = setTimeout(() => { touched.targetScale = 1.0; }, GAME_CONFIG.SCALE_ANIMATION_DURATION);
+      timeoutsRef.current.push(timeout);
       
       // Boost particles
       gameState.setTouchParticles((prev: any[]) => [...prev, {
@@ -72,7 +75,14 @@ export const useGameControls = ({
         type: 'boost'
       }]);
     }
-  };
+  }, [canvasRef, wrapperRef, entitiesRef, gameState, scaledParams, timeoutsRef]);
+  
+  // Cleanup timeouts on unmount
+  useEffect(() => {
+    return () => {
+      timeoutsRef.current.forEach(clearTimeout);
+    };
+  }, []);
   
   // Touch/click listeners
   useEffect(() => {
@@ -95,7 +105,7 @@ export const useGameControls = ({
       canvas.removeEventListener('mousedown', handleTouch);
       canvas.removeEventListener('touchstart', handleTouch);
     };
-  }, [gameState.gamePhase, scaledParams]);
+  }, [gameState.gamePhase, scaledParams, handleInteraction]);
   
   return { handleInteraction };
 };

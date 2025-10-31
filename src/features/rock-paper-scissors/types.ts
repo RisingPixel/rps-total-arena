@@ -38,3 +38,8 @@ export interface BetConfettiParticle {
   y: number;
   emoji: string;
 }
+
+export interface GameState {
+  gamePhase: GamePhase;
+  setTouchParticles: React.Dispatch<React.SetStateAction<TouchParticle[]>>;
+}
