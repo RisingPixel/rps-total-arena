@@ -80,14 +80,8 @@ export const VictoryScreen = ({
             <span className="stat-label">Collisions</span>
           </div>
           
-          <div className="stat-item animate-stat-slide" style={{ animationDelay: '0.6s' }}>
-            <span className="stat-icon">👑</span>
-            <span className="stat-value">{EMOJI_MAP[winner]}</span>
-            <span className="stat-label">Champion</span>
-          </div>
-          
           {maxCombo >= 3 && (
-            <div className="stat-item animate-stat-slide" style={{ animationDelay: '0.8s' }}>
+            <div className="stat-item animate-stat-slide" style={{ animationDelay: '0.6s' }}>
               <span className="stat-icon">🔥</span>
               <span className="stat-value">x{maxCombo}</span>
               <span className="stat-label">Max Combo</span>
