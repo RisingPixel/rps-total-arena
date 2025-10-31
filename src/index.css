@@ -277,7 +277,8 @@ button:active::after {
 }
 
 .hud-compact-container {
-  height: clamp(60px, 10vh, 100px);
+  height: auto;
+  min-height: clamp(60px, 10vh, 100px);
 }
 
 /* Top Row: Title + Streak Chip */
@@ -475,7 +476,8 @@ button:active::after {
 /* Landscape Optimization */
 @media (max-height: 500px) {
   .hud-compact-container {
-    height: clamp(40px, 6vh, 60px) !important;
+    height: auto;
+    min-height: clamp(40px, 6vh, 60px);
     padding-top: 0.25rem;
     padding-bottom: 0.25rem;
   }
@@ -522,7 +524,8 @@ button:active::after {
   }
   
   .hud-compact-container {
-    height: clamp(50px, 8vh, 70px);
+    height: auto;
+    min-height: clamp(50px, 8vh, 70px);
   }
   
   #canvas {
