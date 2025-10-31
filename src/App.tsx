@@ -1,5 +1,5 @@
 import { BrowserRouter, HashRouter, Routes, Route } from "react-router-dom";
-import RockPaperScissors from "./pages/RockPaperScissors";
+import RockPaperScissors from "./features/rock-paper-scissors/RockPaperScissors";
 import NotFound from "./pages/NotFound";
 
 const App = () => {

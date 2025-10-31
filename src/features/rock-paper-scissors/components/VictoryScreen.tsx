@@ -1,0 +1,125 @@
+import { Button } from "@/components/ui/button";
+import { BattleStats, EntityType } from "../types";
+import { EMOJI_MAP } from "../constants";
+
+interface VictoryScreenProps {
+  winner: EntityType;
+  playerBet: EntityType | null;
+  streak: number;
+  maxCombo: number;
+  battleStats: BattleStats;
+  showConfetti: boolean;
+  onPlayAgain: () => void;
+}
+
+export const VictoryScreen = ({ 
+  winner, 
+  playerBet, 
+  streak, 
+  maxCombo, 
+  battleStats, 
+  showConfetti,
+  onPlayAgain 
+}: VictoryScreenProps) => {
+  return (
+    <div 
+      id="winnerOverlay" 
+      className="winner-overlay"
+      role="dialog"
+      aria-labelledby="winnerTitle"
+    >
+      <div className="winner-content">
+        {/* Confetti */}
+        {showConfetti && (
+          <div className="confetti-container">
+            {Array.from({ length: 50 }).map((_, i) => (
+              <div 
+                key={i}
+                className="confetti-piece"
+                style={{
+                  '--x': `${Math.random() * 100}vw`,
+                  '--duration': `${2 + Math.random() * 2}s`,
+                  '--delay': `${Math.random() * 0.5}s`,
+                } as React.CSSProperties}
+              >
+                {EMOJI_MAP[winner]}
+              </div>
+            ))}
+          </div>
+        )}
+        
+        <div 
+          id="winnerEmoji" 
+          className="winner-emoji-burst"
+          data-emoji={EMOJI_MAP[winner]}
+        >
+          {EMOJI_MAP[winner]}
+        </div>
+        
+        <h2 id="winnerTitle" className="winner-title">
+          {winner === playerBet 
+            ? "Victory! 🎉" 
+            : "Defeat 😔"}
+        </h2>
+        
+        <p className="dominance-text">
+          Total domination achieved
+        </p>
+        
+        {/* Stats Recap */}
+        <div className="stats-recap">
+          <div className="stat-item animate-stat-slide" style={{ animationDelay: '0.2s' }}>
+            <span className="stat-icon">⏱️</span>
+            <span className="stat-value">{battleStats.duration}s</span>
+            <span className="stat-label">Battle Duration</span>
+          </div>
+          
+          <div className="stat-item animate-stat-slide" style={{ animationDelay: '0.4s' }}>
+            <span className="stat-icon">💥</span>
+            <span className="stat-value">{battleStats.totalCollisions}</span>
+            <span className="stat-label">Collisions</span>
+          </div>
+          
+          <div className="stat-item animate-stat-slide" style={{ animationDelay: '0.6s' }}>
+            <span className="stat-icon">👑</span>
+            <span className="stat-value">{EMOJI_MAP[winner]}</span>
+            <span className="stat-label">Champion</span>
+          </div>
+          
+          {maxCombo >= 3 && (
+            <div className="stat-item animate-stat-slide" style={{ animationDelay: '0.8s' }}>
+              <span className="stat-icon">🔥</span>
+              <span className="stat-value">x{maxCombo}</span>
+              <span className="stat-label">Max Combo</span>
+            </div>
+          )}
+        </div>
+        
+        {winner === playerBet && streak > 0 && (
+          <div 
+            id="streakCount" 
+            className="streak-display"
+            aria-live="polite"
+          >
+            <span className="streak-emoji">🔥</span>
+            <span className="streak-number">{streak}</span>
+            <span className="streak-label">
+              win streak
+            </span>
+          </div>
+        )}
+        
+        <div className="victory-actions">
+          <Button 
+            id="playAgainBtn"
+            onClick={onPlayAgain}
+            size="lg"
+            className="font-mono"
+          >
+            Play Again
+          </Button>
+        </div>
+      </div>
+    </div>
+  );
+};
