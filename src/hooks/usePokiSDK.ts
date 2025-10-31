@@ -89,51 +89,11 @@ export const usePokiSDK = () => {
     }
   };
 
-  // Rewarded Break (rewarded ad)
-  const rewardedBreak = async (
-    onBreakStart?: () => void,
-    onReward?: () => void,
-    onNoReward?: () => void
-  ): Promise<boolean> => {
-    if (!window.PokiSDK || !isSDKReady) {
-      onNoReward?.();
-      return false;
-    }
-
-    try {
-      setIsAdPlaying(true);
-      
-      const success = await window.PokiSDK.rewardedBreak(() => {
-        // Called when ad starts playing
-        onBreakStart?.();
-        console.log("🎬 Poki: rewardedBreak started");
-      });
-      
-      setIsAdPlaying(false);
-      
-      if (success) {
-        console.log("🎬 Poki: rewardedBreak success - giving reward");
-        onReward?.();
-        return true;
-      } else {
-        console.log("🎬 Poki: rewardedBreak no ad shown");
-        onNoReward?.();
-        return false;
-      }
-    } catch (error) {
-      console.error("Rewarded break error:", error);
-      setIsAdPlaying(false);
-      onNoReward?.();
-      return false;
-    }
-  };
-
   return {
     isSDKReady,
     isAdPlaying,
     gameplayStart,
     gameplayStop,
     commercialBreak,
-    rewardedBreak,
   };
 };
