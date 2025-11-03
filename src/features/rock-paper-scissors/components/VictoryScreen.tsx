@@ -9,6 +9,7 @@ interface VictoryScreenProps {
   maxCombo: number;
   battleStats: BattleStats;
   showConfetti: boolean;
+  coinsEarned: number;
   onPlayAgain: () => void;
   onShowStats?: () => void;
   onShowAchievements?: () => void;
@@ -21,6 +22,7 @@ export const VictoryScreen = ({
   maxCombo, 
   battleStats, 
   showConfetti,
+  coinsEarned,
   onPlayAgain,
   onShowStats,
   onShowAchievements
@@ -71,6 +73,12 @@ export const VictoryScreen = ({
         <p className="dominance-text">
           Total domination achieved
         </p>
+        
+        {/* Coins Earned */}
+        <div className="flex items-center justify-center gap-2 text-primary font-mono text-lg mb-4 animate-fade-in">
+          <span>💰</span>
+          <span>+{coinsEarned} Coins</span>
+        </div>
         
         {/* Stats Recap */}
         <div className="stats-recap">

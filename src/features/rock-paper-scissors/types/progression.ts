@@ -2,6 +2,8 @@ export interface PlayerStats {
   totalGames: number;
   wins: number;
   losses: number;
+  correctBets: number;
+  totalComebacks: number;
   totalCoins: number;
   totalCollisions: number;
   totalCombos: number;

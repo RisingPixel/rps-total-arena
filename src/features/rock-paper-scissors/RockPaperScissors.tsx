@@ -302,12 +302,13 @@ const RockPaperScissors = () => {
       setTimeout(() => gameState.setShowConfetti(false), GAME_CONFIG.CONFETTI_VICTORY_DURATION);
     }
     
+    const currentStreak = gameState.streak;
     gameState.updateStreak(won);
     
     // Record progression
     progression.recordGameResult(
       won,
-      gameState.streak + (won ? 1 : 0),
+      won ? currentStreak + 1 : 0,
       gameState.maxCombo,
       duration,
       gameState.battleStatsRef.current.totalCollisions,
@@ -419,6 +420,7 @@ const RockPaperScissors = () => {
             maxCombo={gameState.maxCombo}
             battleStats={gameState.battleStatsFinal}
             showConfetti={gameState.showConfetti}
+            coinsEarned={progression.lastCoinsEarned}
             onPlayAgain={handlePlayAgain}
             onShowStats={() => setShowStatsPanel(true)}
             onShowAchievements={() => setShowAchievements(true)}
@@ -433,10 +435,10 @@ const RockPaperScissors = () => {
       />
       
       {/* Achievement Toasts */}
-      {progression.newAchievements.map((achievement, index) => (
+      {progression.newAchievements.slice(0, 3).map((achievement, index) => (
         <div 
           key={achievement.id}
-          style={{ top: `${80 + index * 120}px` }}
+          style={{ top: `${80 + index * 100}px` }}
         >
           <AchievementToast 
             achievement={achievement}

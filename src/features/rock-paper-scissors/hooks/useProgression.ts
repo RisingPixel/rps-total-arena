@@ -9,6 +9,8 @@ const DEFAULT_STATS: PlayerStats = {
   totalGames: 0,
   wins: 0,
   losses: 0,
+  correctBets: 0,
+  totalComebacks: 0,
   totalCoins: 0,
   totalCollisions: 0,
   totalCombos: 0,
@@ -38,6 +40,7 @@ export const useProgression = () => {
 
   const [recentCoins, setRecentCoins] = useState<number | null>(null);
   const [newAchievements, setNewAchievements] = useState<Achievement[]>([]);
+  const [lastCoinsEarned, setLastCoinsEarned] = useState(0);
 
   // Persist to localStorage
   useEffect(() => {
@@ -63,7 +66,8 @@ export const useProgression = () => {
     maxCombo: number,
     battleDuration: number,
     totalCollisions: number,
-    won: boolean
+    won: boolean,
+    updatedStats: PlayerStats
   ) => {
     const unlocked: Achievement[] = [];
 
@@ -76,7 +80,7 @@ export const useProgression = () => {
 
         switch (achievement.id) {
           case 'first_win':
-            currentProgress = stats.wins + (won ? 1 : 0);
+            currentProgress = updatedStats.wins;
             shouldUnlock = currentProgress >= 1 && won;
             break;
           
@@ -96,12 +100,12 @@ export const useProgression = () => {
             break;
           
           case 'brawler':
-            currentProgress = stats.totalCollisions + totalCollisions;
+            currentProgress = updatedStats.totalCollisions;
             shouldUnlock = currentProgress >= 100;
             break;
           
           case 'warmonger':
-            currentProgress = stats.totalCollisions + totalCollisions;
+            currentProgress = updatedStats.totalCollisions;
             shouldUnlock = currentProgress >= 500;
             break;
           
@@ -116,42 +120,40 @@ export const useProgression = () => {
             break;
           
           case 'speedrunner':
-            if (won && battleDuration < stats.fastestWin) {
+            if (won && battleDuration < updatedStats.fastestWin) {
               currentProgress = 10 - battleDuration;
               shouldUnlock = battleDuration <= 10;
             }
             break;
           
           case 'veteran':
-            currentProgress = stats.totalGames + 1;
+            currentProgress = updatedStats.totalGames;
             shouldUnlock = currentProgress >= 10;
             break;
           
           case 'arena_legend':
-            currentProgress = stats.totalGames + 1;
+            currentProgress = updatedStats.totalGames;
             shouldUnlock = currentProgress >= 50;
             break;
           
           case 'coin_collector':
-            currentProgress = stats.totalCoins;
-            shouldUnlock = stats.totalCoins >= 500;
+            currentProgress = updatedStats.totalCoins;
+            shouldUnlock = currentProgress >= 500;
             break;
           
           case 'millionaire':
-            currentProgress = stats.totalCoins;
-            shouldUnlock = stats.totalCoins >= 1000;
+            currentProgress = updatedStats.totalCoins;
+            shouldUnlock = currentProgress >= 1000;
             break;
           
           case 'comeback_king':
-            if (won && stats.wins > 0 && currentStreak === 1) {
-              currentProgress = 1;
-              shouldUnlock = true;
-            }
+            currentProgress = updatedStats.totalComebacks;
+            shouldUnlock = updatedStats.totalComebacks >= 3;
             break;
           
           case 'perfect_prediction':
-            currentProgress = stats.wins;
-            shouldUnlock = stats.wins >= 5;
+            currentProgress = updatedStats.correctBets;
+            shouldUnlock = updatedStats.correctBets >= 5;
             break;
         }
 
@@ -186,7 +188,7 @@ export const useProgression = () => {
     }
 
     return unlocked;
-  }, [stats, addCoins]);
+  }, [addCoins]);
 
   const recordGameResult = useCallback((
     won: boolean,
@@ -227,24 +229,31 @@ export const useProgression = () => {
       }
     }
 
-    // Update stats
-    setStats(prev => ({
-      ...prev,
-      totalGames: prev.totalGames + 1,
-      wins: won ? prev.wins + 1 : prev.wins,
-      losses: won ? prev.losses : prev.losses + 1,
-      totalCoins: prev.totalCoins + coinsEarned,
-      totalCollisions: prev.totalCollisions + collisions,
-      totalCombos: prev.totalCombos + (maxCombo >= 3 ? 1 : 0),
-      bestStreak: Math.max(prev.bestStreak, currentStreak),
-      fastestWin: won && battleDuration < prev.fastestWin ? battleDuration : prev.fastestWin,
-    }));
+    setLastCoinsEarned(coinsEarned);
 
+    // Update stats
+    const isComeback = won && stats.losses > 0 && currentStreak === 1;
+    
+    const updatedStats: PlayerStats = {
+      ...stats,
+      totalGames: stats.totalGames + 1,
+      wins: won ? stats.wins + 1 : stats.wins,
+      losses: won ? stats.losses : stats.losses + 1,
+      correctBets: won ? stats.correctBets + 1 : stats.correctBets,
+      totalComebacks: isComeback ? stats.totalComebacks + 1 : stats.totalComebacks,
+      totalCoins: stats.totalCoins + coinsEarned,
+      totalCollisions: stats.totalCollisions + collisions,
+      totalCombos: stats.totalCombos + (maxCombo >= 3 ? 1 : 0),
+      bestStreak: Math.max(stats.bestStreak, currentStreak),
+      fastestWin: won && battleDuration < stats.fastestWin ? battleDuration : stats.fastestWin,
+    };
+
+    setStats(updatedStats);
     addCoins(coinsEarned, won ? 'Victory!' : 'Battle Complete');
 
     // Check for achievements
-    checkAchievements(currentStreak, maxCombo, battleDuration, collisions, won);
-  }, [addCoins, checkAchievements]);
+    checkAchievements(currentStreak, maxCombo, battleDuration, collisions, won, updatedStats);
+  }, [stats, addCoins, checkAchievements]);
 
   const dismissAchievement = useCallback((id: string) => {
     setNewAchievements(prev => prev.filter(a => a.id !== id));
@@ -254,6 +263,7 @@ export const useProgression = () => {
     stats,
     achievements,
     recentCoins,
+    lastCoinsEarned,
     newAchievements,
     recordGameResult,
     dismissAchievement,

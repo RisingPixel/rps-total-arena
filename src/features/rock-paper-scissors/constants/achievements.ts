@@ -128,9 +128,9 @@ export const ACHIEVEMENTS_CONFIG: Omit<Achievement, 'unlocked' | 'progress'>[] =
   {
     id: 'comeback_king',
     name: 'Comeback King',
-    description: 'Win after losing streak',
+    description: 'Win 3 times after losing',
     icon: '🔄',
-    requirement: 1,
+    requirement: 3,
     category: 'special',
     coinReward: 25,
   },
