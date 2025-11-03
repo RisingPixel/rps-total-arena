@@ -1,15 +1,20 @@
-import { useEffect, useMemo, useRef } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import { usePokiSDK } from "@/hooks/usePokiSDK";
 import { useGameState } from "./hooks/useGameState";
 import { useGameLoop } from "./hooks/useGameLoop";
 import { useGameControls } from "./hooks/useGameControls";
 import { useBackgroundMusic } from "./hooks/useBackgroundMusic";
+import { useProgression } from "./hooks/useProgression";
 import { BetScreen } from "./components/BetScreen";
 import { CountdownOverlay } from "./components/CountdownOverlay";
 import { GameHUD } from "./components/GameHUD";
 import { GameCanvas } from "./components/GameCanvas";
 import { VictoryScreen } from "./components/VictoryScreen";
 import { AudioToggle } from "./components/AudioToggle";
+import { CoinDisplay } from "./components/CoinDisplay";
+import { AchievementToast } from "./components/AchievementToast";
+import { StatsPanel } from "./components/StatsPanel";
+import { AchievementsGrid } from "./components/AchievementsGrid";
 import { Card } from "@/components/ui/card";
 import { Slider } from "@/components/ui/slider";
 import { Entity, EntityType } from "./types";
@@ -23,6 +28,10 @@ const RockPaperScissors = () => {
   
   const gameState = useGameState();
   const pokiSDK = usePokiSDK();
+  const progression = useProgression();
+  
+  const [showStatsPanel, setShowStatsPanel] = useState(false);
+  const [showAchievements, setShowAchievements] = useState(false);
   
   // Memoized scaled parameters
   const scaledParams = useMemo(() => {
@@ -286,12 +295,24 @@ const RockPaperScissors = () => {
       duration
     });
     
-    if (winningType === gameState.playerBet) {
+    const won = winningType === gameState.playerBet;
+    
+    if (won) {
       gameState.setShowConfetti(true);
       setTimeout(() => gameState.setShowConfetti(false), GAME_CONFIG.CONFETTI_VICTORY_DURATION);
     }
     
-    gameState.updateStreak(winningType === gameState.playerBet);
+    gameState.updateStreak(won);
+    
+    // Record progression
+    progression.recordGameResult(
+      won,
+      gameState.streak + (won ? 1 : 0),
+      gameState.maxCombo,
+      duration,
+      gameState.battleStatsRef.current.totalCollisions,
+      gameState.speed
+    );
   };
   
   const handleToggleMute = () => {
@@ -399,9 +420,46 @@ const RockPaperScissors = () => {
             battleStats={gameState.battleStatsFinal}
             showConfetti={gameState.showConfetti}
             onPlayAgain={handlePlayAgain}
+            onShowStats={() => setShowStatsPanel(true)}
+            onShowAchievements={() => setShowAchievements(true)}
           />
         )}
       </div>
+      
+      {/* Coin Display - Always visible */}
+      <CoinDisplay 
+        coins={progression.stats.totalCoins}
+        recentCoins={progression.recentCoins}
+      />
+      
+      {/* Achievement Toasts */}
+      {progression.newAchievements.map((achievement, index) => (
+        <div 
+          key={achievement.id}
+          style={{ top: `${80 + index * 120}px` }}
+        >
+          <AchievementToast 
+            achievement={achievement}
+            onDismiss={progression.dismissAchievement}
+          />
+        </div>
+      ))}
+      
+      {/* Stats Panel */}
+      {showStatsPanel && (
+        <StatsPanel 
+          stats={progression.stats}
+          onClose={() => setShowStatsPanel(false)}
+        />
+      )}
+      
+      {/* Achievements Grid */}
+      {showAchievements && (
+        <AchievementsGrid
+          achievements={progression.achievements}
+          onClose={() => setShowAchievements(false)}
+        />
+      )}
       
       {/* Audio Toggle - Always visible */}
       <AudioToggle 

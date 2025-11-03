@@ -10,6 +10,8 @@ interface VictoryScreenProps {
   battleStats: BattleStats;
   showConfetti: boolean;
   onPlayAgain: () => void;
+  onShowStats?: () => void;
+  onShowAchievements?: () => void;
 }
 
 export const VictoryScreen = ({ 
@@ -19,7 +21,9 @@ export const VictoryScreen = ({
   maxCombo, 
   battleStats, 
   showConfetti,
-  onPlayAgain 
+  onPlayAgain,
+  onShowStats,
+  onShowAchievements
 }: VictoryScreenProps) => {
   return (
     <div 
@@ -106,6 +110,26 @@ export const VictoryScreen = ({
         )}
         
         <div className="victory-actions">
+          {onShowStats && (
+            <Button 
+              onClick={onShowStats}
+              size="lg"
+              className="font-mono"
+            >
+              📊 Stats
+            </Button>
+          )}
+          
+          {onShowAchievements && (
+            <Button 
+              onClick={onShowAchievements}
+              size="lg"
+              className="font-mono"
+            >
+              🏅 Achievements
+            </Button>
+          )}
+          
           <Button 
             id="playAgainBtn"
             onClick={onPlayAgain}

@@ -43,3 +43,6 @@ export interface GameState {
   gamePhase: GamePhase;
   setTouchParticles: React.Dispatch<React.SetStateAction<TouchParticle[]>>;
 }
+
+// Progression System Types
+export * from './types/progression';
