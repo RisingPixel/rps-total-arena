@@ -1033,6 +1033,72 @@ button:active::after {
   }
 }
 
+/* Mobile Optimization - Victory Screen Compact */
+@media (max-height: 600px) {
+  .winner-content {
+    padding: 1rem !important;
+    gap: 0.5rem !important;
+  }
+  
+  .winner-emoji-burst {
+    font-size: 3rem !important;
+    margin-bottom: 0.5rem !important;
+  }
+  
+  .winner-title {
+    font-size: 1.5rem !important;
+    margin-bottom: 0.25rem !important;
+  }
+  
+  .dominance-text {
+    font-size: 0.875rem !important;
+    margin-bottom: 0.5rem !important;
+  }
+  
+  .stats-recap {
+    gap: 0.5rem !important;
+    margin: 0.75rem 0 !important;
+  }
+  
+  .stat-item {
+    padding: 0.5rem !important;
+  }
+  
+  .stat-icon {
+    font-size: 1.5rem !important;
+  }
+  
+  .stat-value {
+    font-size: 1rem !important;
+  }
+  
+  .stat-label {
+    font-size: 0.625rem !important;
+  }
+  
+  .streak-display {
+    margin: 0.75rem 0 !important;
+    padding: 0.5rem 1rem !important;
+  }
+  
+  .streak-emoji {
+    font-size: 1.5rem !important;
+  }
+  
+  .streak-number {
+    font-size: 1.75rem !important;
+  }
+  
+  .streak-label {
+    font-size: 0.75rem !important;
+  }
+  
+  .victory-actions {
+    margin-top: 1rem !important;
+    gap: 0.5rem !important;
+  }
+}
+
 /* Canvas Wrapper */
 .canvas-wrapper {
   position: relative !important;

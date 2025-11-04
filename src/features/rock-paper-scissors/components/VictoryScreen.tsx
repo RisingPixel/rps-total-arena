@@ -118,31 +118,11 @@ export const VictoryScreen = ({
         )}
         
         <div className="victory-actions">
-          {onShowStats && (
-            <Button 
-              onClick={onShowStats}
-              size="lg"
-              className="font-mono"
-            >
-              📊 Stats
-            </Button>
-          )}
-          
-          {onShowAchievements && (
-            <Button 
-              onClick={onShowAchievements}
-              size="lg"
-              className="font-mono"
-            >
-              🏅 Achievements
-            </Button>
-          )}
-          
           <Button 
             id="playAgainBtn"
             onClick={onPlayAgain}
             size="lg"
-            className="font-mono"
+            className="font-mono w-full"
           >
             Play Again
           </Button>
