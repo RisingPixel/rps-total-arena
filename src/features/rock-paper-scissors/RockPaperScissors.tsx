@@ -32,6 +32,7 @@ const RockPaperScissors = () => {
   
   const [showStatsPanel, setShowStatsPanel] = useState(false);
   const [showAchievements, setShowAchievements] = useState(false);
+  const [showSpeedControl, setShowSpeedControl] = useState(false);
   
   // Memoized scaled parameters
   const scaledParams = useMemo(() => {
@@ -157,16 +158,9 @@ const RockPaperScissors = () => {
   // Keyboard controls
   useEffect(() => {
     const handleKeyPress = (e: KeyboardEvent) => {
-      if (e.code === "Space" && gameState.isRunning) {
+      if (e.code === "Space" && gameState.gamePhase === 'running') {
         e.preventDefault();
-        const newPausedState = !gameState.isPaused;
-        gameState.setIsPaused(newPausedState);
-        
-        if (newPausedState) {
-          pokiSDK.gameplayStop();
-        } else {
-          pokiSDK.gameplayStart();
-        }
+        setShowSpeedControl(prev => !prev);
       }
       
       if (e.code === "Escape" && gameState.gamePhase === 'victory') {
@@ -177,7 +171,7 @@ const RockPaperScissors = () => {
     
     window.addEventListener("keydown", handleKeyPress);
     return () => window.removeEventListener("keydown", handleKeyPress);
-  }, [gameState.isRunning, gameState.isPaused, gameState.gamePhase]);
+  }, [gameState.gamePhase]);
   
   // Check for winner
   useEffect(() => {
@@ -393,21 +387,23 @@ const RockPaperScissors = () => {
             />
             
             {/* Speed Control - Positioned below canvas */}
-            <Card className="p-3 sm:p-4">
-              <div className="space-y-1 sm:space-y-2">
-                <label className="text-sm font-medium font-mono" id="speedSlider">
-                  Speed: {gameState.speed}x
-                </label>
-                <Slider
-                  value={[gameState.speed]}
-                  onValueChange={handleSpeedChange}
-                  min={0.5}
-                  max={5}
-                  step={0.5}
-                  aria-labelledby="speedSlider"
-                />
-              </div>
-            </Card>
+            {showSpeedControl && (
+              <Card className="p-3 sm:p-4">
+                <div className="space-y-1 sm:space-y-2">
+                  <label className="text-sm font-medium font-mono" id="speedSlider">
+                    Speed: {gameState.speed}x
+                  </label>
+                  <Slider
+                    value={[gameState.speed]}
+                    onValueChange={handleSpeedChange}
+                    min={0.5}
+                    max={5}
+                    step={0.5}
+                    aria-labelledby="speedSlider"
+                  />
+                </div>
+              </Card>
+            )}
           </div>
         )}
         
