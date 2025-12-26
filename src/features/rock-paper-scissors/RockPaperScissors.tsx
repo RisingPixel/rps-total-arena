@@ -8,6 +8,7 @@ import { useProgression } from "./hooks/useProgression";
 import { BetScreen } from "./components/BetScreen";
 import { CountdownOverlay } from "./components/CountdownOverlay";
 import { GameHUD } from "./components/GameHUD";
+import { ComboBadge } from "./components/ComboBadge";
 import { GameCanvas } from "./components/GameCanvas";
 import { VictoryScreen } from "./components/VictoryScreen";
 import { AudioToggle } from "./components/AudioToggle";
@@ -371,9 +372,7 @@ const RockPaperScissors = () => {
             <GameHUD
               counts={gameState.counts}
               streak={gameState.streak}
-              currentCombo={gameState.currentCombo}
               playerBet={gameState.playerBet}
-              gamePhase={gameState.gamePhase}
             />
             
             <GameCanvas
@@ -424,6 +423,11 @@ const RockPaperScissors = () => {
         )}
       </div>
       
+      {/* Combo Badge - Independent Overlay */}
+      <ComboBadge 
+        currentCombo={gameState.currentCombo}
+        isVisible={gameState.gamePhase === 'running'}
+      />
       {/* Coin Display - Always visible */}
       <CoinDisplay 
         coins={progression.stats.totalCoins}
