@@ -12,12 +12,12 @@ interface BetScreenProps {
 
 export const BetScreen = ({ onBet, bettingTimeLeft, streak, betConfetti }: BetScreenProps) => {
   return (
-    <div id="betScreen" className="w-full space-y-3 sm:space-y-4">
-      <div className="text-center mb-2 sm:mb-4">
+    <div id="betScreen" className="w-full max-h-full flex flex-col items-center gap-2 sm:gap-3 overflow-hidden">
+      <div className="flex-shrink-0 text-center">
         <img 
           src={totalArenaLogo} 
           alt="Total Arena - Rock Paper Scissors" 
-          className="mx-auto h-[8vh] md:h-[12vh] w-auto drop-shadow-lg"
+          className="mx-auto h-[10vh] md:h-[12vh] max-h-24 w-auto drop-shadow-lg"
         />
       </div>
       

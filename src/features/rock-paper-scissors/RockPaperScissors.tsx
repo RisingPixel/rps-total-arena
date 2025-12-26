@@ -349,16 +349,18 @@ const RockPaperScissors = () => {
   
   return (
     <div className="h-screen overflow-hidden bg-gradient-to-br from-background via-background to-accent/10 flex flex-col">
-      <div className="flex-1 flex flex-col items-center justify-center p-2 sm:p-4 max-w-6xl mx-auto w-full">
+      <div className="h-full flex flex-col items-center justify-center p-2 sm:p-4 max-w-6xl mx-auto w-full overflow-hidden">
         
         {/* Bet Screen */}
         {gameState.gamePhase === 'bet' && (
-          <BetScreen
-            onBet={handleBet}
-            bettingTimeLeft={gameState.bettingTimeLeft}
-            streak={gameState.streak}
-            betConfetti={gameState.betConfetti}
-          />
+          <div className="w-full h-full flex flex-col items-center justify-center overflow-hidden">
+            <BetScreen
+              onBet={handleBet}
+              bettingTimeLeft={gameState.bettingTimeLeft}
+              streak={gameState.streak}
+              betConfetti={gameState.betConfetti}
+            />
+          </div>
         )}
         
         {/* Countdown Overlay */}
@@ -368,41 +370,43 @@ const RockPaperScissors = () => {
         
         {/* Running Phase */}
         {gameState.gamePhase === 'running' && (
-          <div className="w-full space-y-2 sm:space-y-3">
-            <GameHUD
-              counts={gameState.counts}
-              streak={gameState.streak}
-              playerBet={gameState.playerBet}
-            />
-            
-            <GameCanvas
-              ref={canvasRef}
-              arenaSize={gameState.arenaSize}
-              touchParticles={gameState.touchParticles}
-              onRemoveParticle={(id) => {
-                gameState.setTouchParticles(prev => prev.filter(p => p.id !== id));
-              }}
-              wrapperRef={wrapperRef}
-            />
-            
-            {/* Speed Control - Positioned below canvas */}
-            {showSpeedControl && (
-              <Card className="p-3 sm:p-4">
-                <div className="space-y-1 sm:space-y-2">
-                  <label className="text-sm font-medium font-mono" id="speedSlider">
-                    Speed: {gameState.speed}x
-                  </label>
-                  <Slider
-                    value={[gameState.speed]}
-                    onValueChange={handleSpeedChange}
-                    min={0.5}
-                    max={5}
-                    step={0.5}
-                    aria-labelledby="speedSlider"
-                  />
-                </div>
-              </Card>
-            )}
+          <div className="w-full h-full flex flex-col justify-center overflow-hidden">
+            <div className="space-y-2 sm:space-y-3">
+              <GameHUD
+                counts={gameState.counts}
+                streak={gameState.streak}
+                playerBet={gameState.playerBet}
+              />
+              
+              <GameCanvas
+                ref={canvasRef}
+                arenaSize={gameState.arenaSize}
+                touchParticles={gameState.touchParticles}
+                onRemoveParticle={(id) => {
+                  gameState.setTouchParticles(prev => prev.filter(p => p.id !== id));
+                }}
+                wrapperRef={wrapperRef}
+              />
+              
+              {/* Speed Control - Positioned below canvas */}
+              {showSpeedControl && (
+                <Card className="p-3 sm:p-4">
+                  <div className="space-y-1 sm:space-y-2">
+                    <label className="text-sm font-medium font-mono" id="speedSlider">
+                      Speed: {gameState.speed}x
+                    </label>
+                    <Slider
+                      value={[gameState.speed]}
+                      onValueChange={handleSpeedChange}
+                      min={0.5}
+                      max={5}
+                      step={0.5}
+                      aria-labelledby="speedSlider"
+                    />
+                  </div>
+                </Card>
+              )}
+            </div>
           </div>
         )}
         
