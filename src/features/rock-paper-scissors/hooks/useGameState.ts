@@ -53,7 +53,7 @@ export const useGameState = () => {
   const [currentCombo, setCurrentCombo] = useState(0);
   const [maxCombo, setMaxCombo] = useState(0);
   const [lastConversionType, setLastConversionType] = useState<EntityType | null>(null);
-  const comboTimeoutRef = useRef<NodeJS.Timeout | null>(null);
+  const comboTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   
   // Juiciness
   const [countdown, setCountdown] = useState<number | null>(null);

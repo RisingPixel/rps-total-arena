@@ -20,7 +20,7 @@ export const handleEntityConversion = (
     setMaxCombo: React.Dispatch<React.SetStateAction<number>>;
     setLastConversionType: React.Dispatch<React.SetStateAction<EntityType | null>>;
     setTouchParticles: React.Dispatch<React.SetStateAction<TouchParticle[]>>;
-    comboTimeoutRef: React.MutableRefObject<NodeJS.Timeout | null>;
+    comboTimeoutRef: React.MutableRefObject<ReturnType<typeof setTimeout> | null>;
   }
 ) => {
   entity.type = winner;
@@ -70,7 +70,7 @@ export const handleEntityConversion = (
 export const resetCombo = (
   setCurrentCombo: React.Dispatch<React.SetStateAction<number>>,
   setLastConversionType: React.Dispatch<React.SetStateAction<EntityType | null>>,
-  comboTimeoutRef: React.MutableRefObject<NodeJS.Timeout | null>
+  comboTimeoutRef: React.MutableRefObject<ReturnType<typeof setTimeout> | null>
 ) => {
   setCurrentCombo(0);
   setLastConversionType(null);

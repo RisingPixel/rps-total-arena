@@ -18,7 +18,7 @@ export const useGameControls = ({
   gameState, 
   scaledParams 
 }: UseGameControlsParams) => {
-  const timeoutsRef = useRef<NodeJS.Timeout[]>([]);
+  const timeoutsRef = useRef<ReturnType<typeof setTimeout>[]>([]);
   
   const handleInteraction = useCallback((clientX: number, clientY: number) => {
     const canvas = canvasRef.current;
